@@ -2,7 +2,7 @@
 
 任務 01：教師註冊、Email 驗證、登入／登出、忘記密碼、建立與編輯自己的班級。
 
-前端 React／TypeScript／Vite，後端 Django／DRF，資料庫 PostgreSQL。此資料夾為獨立 Git repo；Brain 不備份這裡的程式碼，產品 remote 目前尚未設定。
+前端 React／TypeScript／Vite，後端 Django／DRF，資料庫 PostgreSQL。此資料夾為獨立 Git repo，遠端為 [CY-Marowak/ClassManagement](https://github.com/CY-Marowak/ClassManagement)。Brain 不備份這裡的程式碼；請在 app 資料夾提交後執行 `git push`，將產品提交推送至 GitHub。
 
 ## 第一次啟動（Windows PowerShell）
 
