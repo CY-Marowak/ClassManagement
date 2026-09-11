@@ -100,7 +100,10 @@ class MeView(APIView):
         return Response(user_data(request.user))
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class LogoutView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         logout(request)
         return Response({"detail": "已登出。"})

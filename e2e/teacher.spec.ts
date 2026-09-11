@@ -89,12 +89,26 @@ test("teacher verifies, creates a cohort, updates its grade, resets password and
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByRole("button", { name: "寄送重設連結" }).click();
   await expect(page.getByRole("status")).toContainText("信件已寄出");
+  // A teacher may open a reset link after signing back in while waiting for email.
+  await page.getByRole("link", { name: "返回登入" }).click();
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("密碼", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "登入班級日常" }).click();
+  await expect(page.getByRole("heading", { name: "向日葵班" })).toBeVisible();
+  const existingTab = await page.context().newPage();
+  await existingTab.goto("/#classes");
+  await expect(existingTab.getByRole("heading", { name: "向日葵班" })).toBeVisible();
   await page.goto(mailLink(email, "reset"));
   await page
     .getByLabel("新密碼", { exact: true })
     .fill("Changed!Classroom2026");
   await page.getByRole("button", { name: "更新密碼" }).click();
   await expect(page.getByRole("status")).toContainText("密碼已更新");
+  await existingTab.getByRole("button", { name: "登出", exact: true }).click();
+  await expect(
+    existingTab.getByRole("button", { name: "登入班級日常" }),
+  ).toBeVisible();
+  await existingTab.close();
   await page.getByRole("link", { name: "返回登入" }).click();
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("密碼", { exact: true }).fill("Changed!Classroom2026");

@@ -31,7 +31,12 @@ function App() {
       onRefresh={setTeacher}
     />
   ) : (
-    <AccountForm key={route} route={route} onLogin={setTeacher} />
+    <AccountForm
+      key={route}
+      route={route}
+      onLogin={setTeacher}
+      onPasswordReset={() => setTeacher(null)}
+    />
   );
 }
 

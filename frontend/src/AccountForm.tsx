@@ -21,9 +21,11 @@ const hints: Record<string, string> = {
 export function AccountForm({
   route,
   onLogin,
+  onPasswordReset,
 }: {
   route: string;
   onLogin: (teacher: Teacher) => void;
+  onPasswordReset: () => void;
 }) {
   const [rawMode, query] = route.split("?");
   const mode = titles[rawMode] ? rawMode : "login";
@@ -56,6 +58,7 @@ export function AccountForm({
         });
         setNotice(result.detail);
         setDone(true);
+        if (mode === "reset") onPasswordReset();
         if (token) history.replaceState(null, "", `#${mode}`);
       }
     } catch (e) {

@@ -10,6 +10,15 @@ from rest_framework.test import APIClient, APITestCase
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class TeacherAccountsTests(APITestCase):
+    def test_logout_after_session_expires_still_requires_csrf(self):
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertEqual(client.post("/api/auth/logout/").status_code, 403)
+        csrf = client.get("/api/csrf/").json()["csrfToken"]
+        self.assertEqual(
+            client.post("/api/auth/logout/", HTTP_X_CSRFTOKEN=csrf).status_code, 200
+        )
+        self.assertEqual(client.get("/api/auth/me/").status_code, 403)
+
     def test_csrf_required_even_before_login(self):
         client = APIClient(enforce_csrf_checks=True)
         data = {
