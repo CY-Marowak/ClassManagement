@@ -5,6 +5,40 @@ from core.models import User
 
 
 class StudentWorkflowTests(APITestCase):
+    def test_delete_class_erases_student_accounts_events_and_sessions_only_for_that_class(self):
+        self.client.post(self.roster_url, {"text": "1\t小明\t00001"}, format="json")
+        kept = self.client.post(
+            "/api/classes/", {"name": "保留班", "entry_year": 2026, "current_grade": 1}
+        ).json()
+        self.client.post(
+            f"/api/classes/{kept['id']}/students/", {"text": "1\t小華\t00001"}, format="json"
+        )
+        removed_login = self.student_login()
+        kept_login = self.student_login(kept)
+        session_key = removed_login.cookies["sessionid"].value
+        Student = apps.get_model("core", "Student")
+        student_id = Student.objects.get(cohort_id=self.cohort["id"]).pk
+        user_id = Student.objects.get(pk=student_id).user_id
+        response = self.client.delete(
+            f"/api/classes/{self.cohort['id']}/", {"confirmation_name": "向日葵班"}, format="json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Student.objects.filter(pk=student_id).exists())
+        self.assertFalse(User.objects.filter(pk=user_id).exists())
+        self.assertFalse(
+            apps.get_model("core", "StudentCreatedEvent")
+            .objects.filter(student_id=student_id)
+            .exists()
+        )
+        self.assertFalse(
+            apps.get_model("sessions", "Session").objects.filter(session_key=session_key).exists()
+        )
+        self.assertEqual(removed_login.get("/api/auth/me/").status_code, 403)
+        self.assertEqual(kept_login.get("/api/auth/me/").status_code, 200)
+        self.assertEqual(self.client.get("/api/auth/me/").status_code, 200)
+        self.assertEqual(Student.objects.count(), 1)
+        self.assertEqual(User.objects.count(), 2)
+
     def setUp(self):
         self.owner = User.objects.create_user(
             username="teacher",

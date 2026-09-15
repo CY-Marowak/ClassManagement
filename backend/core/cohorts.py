@@ -1,10 +1,11 @@
+from django.contrib.sessions.models import Session
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ClassMember, Cohort
+from .models import ClassMember, Cohort, User
 from .permissions import IsTeacher
 from .serializers import CohortSerializer, DeleteCohortSerializer
 
@@ -50,6 +51,14 @@ class ClassDetailView(APIView):
                 raise ValidationError(
                     {"confirmation_name": "請輸入目前完整班級名稱，才可永久刪除。"}
                 )
+            student_user_ids = set(cohort.students.values_list("user_id", flat=True))
+            # These users belong exclusively to this class; teacher identities stay intact.
+            User.objects.filter(pk__in=student_user_ids, account_type="student").delete()
+            if student_user_ids:
+                session_user_ids = {str(pk) for pk in student_user_ids}
+                for session in Session.objects.all().iterator():
+                    if session.get_decoded().get("_auth_user_id") in session_user_ids:
+                        session.delete()
             cohort.delete()
         return Response({"detail": "班級及所屬資料已永久刪除，無法復原。"})
 
