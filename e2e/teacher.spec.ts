@@ -97,7 +97,9 @@ test("teacher verifies, creates a cohort, updates its grade, resets password and
   await expect(page.getByRole("heading", { name: "向日葵班" })).toBeVisible();
   const existingTab = await page.context().newPage();
   await existingTab.goto("/#classes");
-  await expect(existingTab.getByRole("heading", { name: "向日葵班" })).toBeVisible();
+  await expect(
+    existingTab.getByRole("heading", { name: "向日葵班" }),
+  ).toBeVisible();
   await page.goto(mailLink(email, "reset"));
   await page
     .getByLabel("新密碼", { exact: true })
@@ -114,4 +116,67 @@ test("teacher verifies, creates a cohort, updates its grade, resets password and
   await page.getByLabel("密碼", { exact: true }).fill("Changed!Classroom2026");
   await page.getByRole("button", { name: "登入班級日常" }).click();
   await expect(page.getByRole("heading", { name: "向日葵班" })).toBeVisible();
+
+  // Permanent deletion is explicit, cancellable and still absent after reloading.
+  await page.getByRole("button", { name: "編輯班級" }).click();
+  await page.getByRole("button", { name: "永久刪除班級", exact: true }).click();
+  const confirmation = page.getByRole("dialog", { name: "永久刪除班級" });
+  await expect(confirmation).toContainText("向日葵班");
+  await expect(confirmation).toContainText("無法復原");
+  await expect(confirmation).toContainText("教師帳號和其他班級不受影響");
+  const remove = confirmation.getByRole("button", { name: "確認永久刪除" });
+  await expect(remove).toBeDisabled();
+  await confirmation.getByLabel("輸入完整班級名稱").fill("向日葵");
+  await expect(remove).toBeDisabled();
+  await confirmation.getByRole("button", { name: "取消" }).click();
+  await expect(confirmation).not.toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "向日葵班" })).toBeVisible();
+
+  await page.getByRole("button", { name: "編輯班級" }).click();
+  await page.getByRole("button", { name: "永久刪除班級", exact: true }).click();
+  await confirmation.getByLabel("輸入完整班級名稱").fill("向日葵班");
+  await expect(remove).toBeEnabled();
+
+  // Another tab renamed the class: the stale confirmation must fail safely.
+  const cohorts = await (await page.request.get("/api/classes/")).json();
+  const csrf = await (await page.request.get("/api/csrf/")).json();
+  const renamed = await page.request.patch(`/api/classes/${cohorts[0].id}/`, {
+    headers: { "X-CSRFToken": csrf.csrfToken },
+    data: { name: "向日葵二班" },
+  });
+  expect(renamed.ok()).toBe(true);
+  await remove.click();
+  await expect(confirmation.getByRole("alert")).toContainText(
+    "請輸入目前完整班級名稱",
+  );
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "取消" }).click();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "向日葵二班" })).toBeVisible();
+  await page.getByRole("button", { name: "編輯班級" }).click();
+  await page.getByRole("button", { name: "永久刪除班級", exact: true }).click();
+  await confirmation.getByLabel("輸入完整班級名稱").fill("向日葵二班");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.screenshot({
+    path: ".local/delete-class-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: ".local/delete-class-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await confirmation.evaluate((el) => el.scrollWidth <= el.clientWidth),
+  ).toBe(true);
+  await remove.click();
+  await expect(confirmation).not.toBeVisible();
+  await expect(page.getByRole("status")).toContainText("已永久刪除");
+  await expect(page.locator(".class-card")).toHaveCount(0);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "建立第一個班級" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "向日葵班" })).toHaveCount(0);
 });

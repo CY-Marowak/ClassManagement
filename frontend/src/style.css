@@ -446,6 +446,57 @@ small {
   grid-template-columns: 1fr 1fr;
   gap: 18px;
 }
+.danger-zone {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #edc5be;
+}
+.danger-zone p {
+  font-size: 14px;
+}
+.danger-text {
+  color: #a12c24;
+}
+.danger-button {
+  padding: 11px 20px;
+  border-radius: 9px;
+  border: 1px solid #a12c24;
+  background: #a12c24;
+  color: #fff;
+  font-weight: 600;
+}
+.danger-button:hover:not(:disabled) {
+  background: #81231d;
+}
+.danger-button:disabled {
+  cursor: not-allowed;
+}
+.delete-dialog {
+  width: min(540px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 26px;
+  border: 1px solid #edc5be;
+  border-radius: 16px;
+  color: #263b33;
+}
+.delete-dialog::backdrop {
+  background: #15291dcc;
+}
+.delete-warning {
+  padding: 16px;
+  background: #fff0ea;
+  border: 1px solid #edc5be;
+  border-radius: 9px;
+  color: #81231d;
+  font-size: 14px;
+}
+.delete-warning p {
+  margin: 10px 0 0;
+}
+.delete-class-name {
+  overflow-wrap: anywhere;
+}
 .form-row label {
   margin-top: 0;
 }

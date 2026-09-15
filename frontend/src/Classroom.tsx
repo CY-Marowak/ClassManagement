@@ -1,10 +1,11 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, type Cohort, type Notice, type Teacher } from "./api";
 
 function ClassForm({
   cohort,
   onSave,
   onCancel,
+  onDelete,
 }: {
   cohort?: Cohort;
   onSave: (values: {
@@ -13,6 +14,7 @@ function ClassForm({
     current_grade: number;
   }) => Promise<void>;
   onCancel: () => void;
+  onDelete?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -94,7 +96,118 @@ function ClassForm({
           {busy ? "儲存中…" : cohort ? "儲存變更" : "建立班級"}
         </button>
       </div>
+      {cohort && onDelete && (
+        <section className="danger-zone" aria-label="危險操作">
+          <h3>危險操作</h3>
+          <p>永久刪除這個班級及所有所屬資料，刪除後無法復原。</p>
+          <button
+            type="button"
+            className="secondary danger-text"
+            onClick={onDelete}
+            disabled={busy}
+          >
+            永久刪除班級
+          </button>
+        </section>
+      )}
     </form>
+  );
+}
+
+function DeleteClassDialog({
+  cohort,
+  onCancel,
+  onDeleted,
+}: {
+  cohort: Cohort;
+  onCancel: () => void;
+  onDeleted: (cohort: Cohort) => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    const element = dialog.current!;
+    element.showModal();
+    return () => element.close();
+  }, []);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || name !== cohort.name) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/classes/${cohort.id}/`, "DELETE", {
+        confirmation_name: name,
+      });
+      onDeleted(cohort);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "刪除失敗，請稍後再試。");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <dialog
+      ref={dialog}
+      className="delete-dialog"
+      aria-labelledby="delete-class-title"
+      aria-describedby="delete-class-warning"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) onCancel();
+      }}
+    >
+      <form onSubmit={submit}>
+        <p className="eyebrow danger-text">危險操作</p>
+        <h2 id="delete-class-title">永久刪除班級</h2>
+        <p>
+          即將刪除：<strong className="delete-class-name">{cohort.name}</strong>
+        </p>
+        <div id="delete-class-warning" className="delete-warning">
+          <strong>所有班級資料將永久刪除，無法復原。</strong>
+          <p>
+            包含學生資料及專屬帳號、分數與操作歷史、點數交易、公告與留言、吉祥物，以及教師加入關係。
+          </p>
+          <p>教師帳號和其他班級不受影響。</p>
+        </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        <label>
+          輸入完整班級名稱
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            required
+            maxLength={80}
+            autoComplete="off"
+            disabled={busy}
+          />
+        </label>
+        <div className="actions">
+          <button
+            type="button"
+            className="secondary"
+            autoFocus
+            disabled={busy}
+            onClick={onCancel}
+          >
+            取消
+          </button>
+          <button
+            className="danger-button"
+            disabled={busy || name !== cohort.name}
+          >
+            {busy ? "刪除中…" : "確認永久刪除"}
+          </button>
+        </div>
+      </form>
+    </dialog>
   );
 }
 
@@ -110,6 +223,7 @@ export function Classroom({
   const [classes, setClasses] = useState<Cohort[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Cohort | "new" | null>(null);
+  const [deleting, setDeleting] = useState<Cohort | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -234,6 +348,9 @@ export function Classroom({
               key={editing === "new" ? "new" : editing.id}
               cohort={editing === "new" ? undefined : editing}
               onCancel={() => setEditing(null)}
+              onDelete={
+                editing !== "new" ? () => setDeleting(editing) : undefined
+              }
               onSave={async (values) => {
                 const saved = await api<Cohort>(
                   editing === "new" ? "/classes/" : `/classes/${editing.id}/`,
@@ -254,6 +371,20 @@ export function Classroom({
               }}
             />
           </section>
+        )}
+        {deleting && (
+          <DeleteClassDialog
+            key={deleting.id}
+            cohort={deleting}
+            onCancel={() => setDeleting(null)}
+            onDeleted={(removed) => {
+              setClasses((old) => old.filter((c) => c.id !== removed.id));
+              setDeleting(null);
+              setEditing(null);
+              setError("");
+              setNotice(`「${removed.name}」及所屬資料已永久刪除，無法復原。`);
+            }}
+          />
         )}
         {loading ? (
           <p role="status">正在載入班級…</p>

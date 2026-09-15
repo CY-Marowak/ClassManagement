@@ -43,3 +43,7 @@ class CohortSerializer(serializers.ModelSerializer):
         model = Cohort
         fields = ["id", "name", "entry_year", "current_grade"]
         read_only_fields = ["id"]
+
+
+class DeleteCohortSerializer(serializers.Serializer):
+    confirmation_name = serializers.CharField(max_length=80, trim_whitespace=False)

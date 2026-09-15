@@ -1,11 +1,11 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import ClassMember, Cohort
-from .serializers import CohortSerializer
+from .serializers import CohortSerializer, DeleteCohortSerializer
 
 
 class ClassesView(APIView):
@@ -29,6 +29,25 @@ class ClassesView(APIView):
 
 
 class ClassDetailView(APIView):
+    def delete(self, request, pk):
+        with transaction.atomic():
+            membership = get_object_or_404(
+                ClassMember.objects.select_for_update(),
+                cohort_id=pk,
+                user=request.user,
+                role="homeroom",
+                approved=True,
+            )
+            cohort = Cohort.objects.select_for_update().get(pk=membership.cohort_id)
+            confirmation = DeleteCohortSerializer(data=request.data)
+            confirmation.is_valid(raise_exception=True)
+            if confirmation.validated_data["confirmation_name"] != cohort.name:
+                raise ValidationError(
+                    {"confirmation_name": "請輸入目前完整班級名稱，才可永久刪除。"}
+                )
+            cohort.delete()
+        return Response({"detail": "班級及所屬資料已永久刪除，無法復原。"})
+
     def get(self, request, pk):
         membership = get_object_or_404(
             ClassMember.objects.select_related("cohort"),

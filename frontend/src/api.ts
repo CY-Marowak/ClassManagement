@@ -21,6 +21,7 @@ const fieldNames: Record<string, string> = {
   entry_year: "入學年度",
   current_grade: "目前年級",
   token: "驗證連結",
+  confirmation_name: "確認班級名稱",
 };
 
 export async function api<T>(
