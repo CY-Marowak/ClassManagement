@@ -1,0 +1,11 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\backend",
+    "\\backend\\core",
+    "\\frontend",
+    "\\frontend\\src"
+  ],
+  "SelectedNode": "\\backend\\core\\throttling.py",
+  "PreviewInSolutionExplorer": false
+}
