@@ -7,7 +7,7 @@ from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -28,7 +28,13 @@ def csrf(request):
 
 
 def user_data(user):
+    if user.account_type == "student":
+        return {
+            "account_type": "student",
+            "must_change_password": user.student.must_change_password,
+        }
     return {
+        "account_type": "teacher",
         "id": user.pk,
         "display_name": user.display_name,
         "email": user.email,
@@ -84,7 +90,7 @@ class LoginView(PublicAuthView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = User.objects.filter(
-            email=serializer.validated_data["email"].lower(), is_active=True
+            email=serializer.validated_data["email"].lower(), is_active=True, account_type="teacher"
         ).first()
         valid = user.check_password(serializer.validated_data["password"]) if user else False
         if not user:
@@ -96,6 +102,8 @@ class LoginView(PublicAuthView):
 
 
 class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         return Response(user_data(request.user))
 
@@ -117,7 +125,7 @@ class RequestEmailView(PublicAuthView):
         serializer = EmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = User.objects.filter(
-            email=serializer.validated_data["email"].lower(), is_active=True
+            email=serializer.validated_data["email"].lower(), is_active=True, account_type="teacher"
         ).first()
         if user and (self.purpose == "reset" or not user.email_verified):
             send_action_email(user, self.purpose)

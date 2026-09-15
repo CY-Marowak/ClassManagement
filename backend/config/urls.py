@@ -1,10 +1,15 @@
 from core import views
 from core.cohorts import ClassDetailView, ClassesView
+from core.students import StudentLoginView, StudentMeView, StudentPasswordView, StudentsView
 from django.urls import path
 
 urlpatterns = [
     path("api/classes/", ClassesView.as_view()),
     path("api/classes/<int:pk>/", ClassDetailView.as_view()),
+    path("api/classes/<int:pk>/students/", StudentsView.as_view()),
+    path("api/student/login/", StudentLoginView.as_view()),
+    path("api/student/change-password/", StudentPasswordView.as_view()),
+    path("api/student/me/", StudentMeView.as_view()),
     path("api/csrf/", views.csrf),
     path("api/auth/register/", views.RegisterView.as_view()),
     path("api/auth/verify/", views.VerifyView.as_view()),

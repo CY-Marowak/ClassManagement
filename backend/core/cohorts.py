@@ -5,10 +5,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import ClassMember, Cohort
+from .permissions import IsTeacher
 from .serializers import CohortSerializer, DeleteCohortSerializer
 
 
 class ClassesView(APIView):
+    permission_classes = [IsTeacher]
+
     def get(self, request):
         memberships = (
             ClassMember.objects.filter(user=request.user, approved=True)
@@ -29,6 +32,8 @@ class ClassesView(APIView):
 
 
 class ClassDetailView(APIView):
+    permission_classes = [IsTeacher]
+
     def delete(self, request, pk):
         with transaction.atomic():
             membership = get_object_or_404(

@@ -41,8 +41,8 @@ class ResetSerializer(TokenSerializer):
 class CohortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cohort
-        fields = ["id", "name", "entry_year", "current_grade"]
-        read_only_fields = ["id"]
+        fields = ["id", "name", "entry_year", "current_grade", "student_login_code"]
+        read_only_fields = ["id", "student_login_code"]
 
 
 class DeleteCohortSerializer(serializers.Serializer):
