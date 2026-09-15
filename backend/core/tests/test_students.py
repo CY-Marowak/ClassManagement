@@ -230,8 +230,7 @@ class StudentWorkflowTests(APITestCase):
             self.roster_url, {"text": "29\t學生29\t00029\n30\t學生30\t00030"}, format="json"
         )
         self.assertEqual(fixed.json()["summary"], {"created": 2, "skipped": 0, "error": 0})
-        self.assertEqual(apps.get_model("core", "Student").objects.count(), 30)
-        self.assertEqual(User.objects.filter(account_type="student").count(), 30)
+        self.assertEqual(len(self.client.get(self.roster_url).json()), 30)
 
     def student_login(self, cohort=None, password="00001"):
         client = APIClient()

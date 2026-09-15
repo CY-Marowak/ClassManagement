@@ -7,57 +7,57 @@ import { Classroom } from "./Classroom";
 import "./style.css";
 
 function App() {
-  const [teacher, setTeacher] = useState<Identity | null>(null);
+  const [identity, setIdentity] = useState<Identity | null>(null);
   const [loading, setLoading] = useState(true);
   const [route, setRoute] = useState(location.hash.slice(1) || "login");
   useEffect(() => {
     const changed = () => setRoute(location.hash.slice(1) || "login");
     window.addEventListener("hashchange", changed);
     api<Identity>("/auth/me/")
-      .then(setTeacher)
-      .catch(() => setTeacher(null))
+      .then(setIdentity)
+      .catch(() => setIdentity(null))
       .finally(() => setLoading(false));
     return () => window.removeEventListener("hashchange", changed);
   }, []);
   if (loading) return <main className="loading">正在準備你的班級空間…</main>;
   const studentLogout = () => {
-    setTeacher(null);
+    setIdentity(null);
     location.hash = "student-login";
   };
-  if (teacher?.account_type === "student") {
-    return teacher.must_change_password ? (
-      <StudentAccess changing onLogin={setTeacher} onLogout={studentLogout} />
+  if (identity?.account_type === "student") {
+    return identity.must_change_password ? (
+      <StudentAccess changing onLogin={setIdentity} onLogout={studentLogout} />
     ) : (
       <StudentHome onLogout={studentLogout} />
     );
   }
-  if (!teacher && route.split("?")[0] === "student-login") {
+  if (!identity && route.split("?")[0] === "student-login") {
     return (
       <StudentAccess
         key={route}
         route={route}
-        onLogin={setTeacher}
+        onLogin={setIdentity}
         onLogout={studentLogout}
       />
     );
   }
   const isActionLink =
     route.startsWith("verify?") || route.startsWith("reset?");
-  return teacher && !isActionLink ? (
+  return identity && !isActionLink ? (
     <Classroom
-      teacher={teacher}
+      teacher={identity}
       onLogout={() => {
-        setTeacher(null);
+        setIdentity(null);
         location.hash = "login";
       }}
-      onRefresh={setTeacher}
+      onRefresh={setIdentity}
     />
   ) : (
     <AccountForm
       key={route}
       route={route}
-      onLogin={setTeacher}
-      onPasswordReset={() => setTeacher(null)}
+      onLogin={setIdentity}
+      onPasswordReset={() => setIdentity(null)}
     />
   );
 }
