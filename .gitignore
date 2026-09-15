@@ -13,3 +13,20 @@ playwright-report/
 test-results/
 *.tsbuildinfo
 my_test
+my_test.md
+
+# Local IDE state and indexes
+.vs/
+
+# Test caches and coverage output
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+
+# Logs and operating-system metadata
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
