@@ -6,6 +6,144 @@
   line-height: 1.6;
   font-weight: 400;
 }
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #d6dfd8;
+  border-radius: 9px;
+  resize: vertical;
+  color: #263b33;
+  background: #fff;
+  tab-size: 8;
+}
+textarea:focus {
+  outline: 3px solid #dfece1;
+  border-color: #477e66;
+}
+.workspace-main {
+  min-width: 0;
+}
+.student-access {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background: radial-gradient(ellipse at top, #e4ecd8, #f7f8f4 65%);
+}
+.student-access-card {
+  width: 100%;
+  max-width: 510px;
+  background: #fffefb;
+  border: 1px solid #dce5d7;
+  border-radius: 22px;
+  padding: 36px;
+  box-shadow: 0 14px 50px #254f420a;
+  overflow-wrap: anywhere;
+}
+.student-access-card .wordmark {
+  margin-bottom: 30px;
+}
+.student-access-card h1 {
+  font-size: 28px;
+}
+.student-home {
+  text-align: center;
+  max-width: 620px;
+}
+.student-home .page-title {
+  margin: 0;
+  align-items: baseline;
+}
+.student-home .animal-avatar {
+  width: 180px;
+  height: 180px;
+  margin: 15px auto 24px;
+}
+.student-cohort {
+  font-size: 23px;
+  font-weight: 600;
+}
+.animal-avatar {
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+.roster {
+  max-width: 950px;
+}
+.roster-panel {
+  background: #fff;
+  border: 1px solid #dce5d7;
+  border-radius: 15px;
+  padding: 26px;
+  margin: 24px 0;
+}
+.roster-panel h2 {
+  font-size: 21px;
+}
+.login-code {
+  letter-spacing: 2px;
+  overflow-wrap: anywhere;
+}
+.import-results {
+  list-style: none;
+  padding: 0;
+  max-height: 320px;
+  overflow: auto;
+}
+.import-results li {
+  padding: 10px 12px;
+  border-bottom: 1px solid #edf0e9;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.import-results span {
+  display: block;
+}
+.import-error {
+  background: #fff0ea;
+  color: #914633;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+th,
+td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e9e1;
+  overflow-wrap: anywhere;
+  max-width: 230px;
+}
+th {
+  background: #f7f8f4;
+  white-space: nowrap;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+@media (max-width: 600px) {
+  .student-access-card {
+    padding: 25px 20px;
+  }
+  .roster-panel {
+    padding: 20px 16px;
+  }
+  th,
+  td {
+    padding: 10px 5px;
+  }
+  .roster .page-title h1 {
+    overflow-wrap: anywhere;
+  }
+}
 * {
   box-sizing: border-box;
 }

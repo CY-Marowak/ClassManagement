@@ -1,10 +1,12 @@
 export type Teacher = {
+  account_type: "teacher";
   id: number;
   display_name: string;
   email: string;
   email_verified: boolean;
 };
 export type Cohort = {
+  student_login_code: string;
   id: number;
   name: string;
   entry_year: number;
@@ -12,6 +14,19 @@ export type Cohort = {
   role: string;
 };
 export type Notice = { detail: string };
+export type StudentSession = {
+  account_type: "student";
+  must_change_password: boolean;
+};
+export type Identity = Teacher | StudentSession;
+export type Student = {
+  id: number;
+  name: string;
+  seat_number: number;
+  student_number: string;
+  avatar: "cat" | "dog" | "rabbit";
+};
+export type StudentProfile = Student & { cohort: { id: number; name: string } };
 
 const fieldNames: Record<string, string> = {
   email: "Email",
@@ -22,6 +37,9 @@ const fieldNames: Record<string, string> = {
   current_grade: "目前年級",
   token: "驗證連結",
   confirmation_name: "確認班級名稱",
+  class_code: "班級登入碼",
+  student_number: "學號",
+  text: "名單",
 };
 
 export async function api<T>(

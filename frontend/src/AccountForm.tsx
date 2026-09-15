@@ -183,6 +183,7 @@ export function AccountForm({
               <>
                 <a href="#forgot">忘記密碼？</a>
                 <a href="#register">建立教師帳號 →</a>
+                <a href="#student-login">學生登入 →</a>
               </>
             ) : (
               <a href="#login">← 返回登入</a>

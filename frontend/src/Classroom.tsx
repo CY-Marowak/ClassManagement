@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, type Cohort, type Notice, type Teacher } from "./api";
+import { StudentRoster } from "./StudentRoster";
 
 function ClassForm({
   cohort,
@@ -221,6 +222,7 @@ export function Classroom({
   onRefresh: (teacher: Teacher) => void;
 }) {
   const [classes, setClasses] = useState<Cohort[]>([]);
+  const [roster, setRoster] = useState<Cohort | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Cohort | "new" | null>(null);
   const [deleting, setDeleting] = useState<Cohort | null>(null);
@@ -253,7 +255,7 @@ export function Classroom({
         </a>
         <div className="side-menu">
           <p className="eyebrow">工作空間</p>
-          <a className="active" href="#classes">
+          <a className="active" href="#classes" onClick={() => setRoster(null)}>
             ▦ <span>我的班級</span>
           </a>
         </div>
@@ -278,167 +280,195 @@ export function Classroom({
         </div>
       </aside>
       <main className="workspace-main">
-        <header>
-          <p className="eyebrow">班級工作空間 / 我的班級</p>
-          <div className="page-title">
-            <div>
-              <h1>我的班級</h1>
-              <p className="muted">
-                {teacher.display_name}，從這裡開始今天的班級日常。
-              </p>
-            </div>
-            {teacher.email_verified && (
-              <button className="primary" onClick={() => setEditing("new")}>
-                ＋ 新增班級
-              </button>
-            )}
-          </div>
-        </header>
-        {error && (
-          <div role="alert" className="error">
-            {error}
-          </div>
-        )}
-        {notice && (
-          <div role="status" className="notice">
-            {notice}
-          </div>
-        )}
-        {!teacher.email_verified && (
-          <section className="verification">
-            <h2>再一步，完成 Email 驗證</h2>
-            <p>請開啟信箱中的驗證連結。完成後，就能建立你的第一個班級。</p>
-            <div className="actions">
-              <button
-                className="secondary"
-                disabled={busy}
-                onClick={() =>
-                  action(async () => {
-                    const result = await api<Notice>(
-                      "/auth/resend-verification/",
-                      "POST",
-                      { email: teacher.email },
-                    );
-                    setNotice(result.detail);
-                  })
-                }
-              >
-                重新寄送驗證信
-              </button>
-              <button
-                className="primary"
-                disabled={busy}
-                onClick={() =>
-                  action(async () => {
-                    const current = await api<Teacher>("/auth/me/");
-                    onRefresh(current);
-                    if (!current.email_verified)
-                      setNotice("尚未完成驗證，請先開啟信件連結。");
-                  })
-                }
-              >
-                我已驗證，重新確認
-              </button>
-            </div>
-          </section>
-        )}
-        {editing && (
-          <section className="editor">
-            <ClassForm
-              key={editing === "new" ? "new" : editing.id}
-              cohort={editing === "new" ? undefined : editing}
-              onCancel={() => setEditing(null)}
-              onDelete={
-                editing !== "new" ? () => setDeleting(editing) : undefined
-              }
-              onSave={async (values) => {
-                const saved = await api<Cohort>(
-                  editing === "new" ? "/classes/" : `/classes/${editing.id}/`,
-                  editing === "new" ? "POST" : "PATCH",
-                  values,
-                );
-                setClasses((old) =>
-                  editing === "new"
-                    ? [...old, saved]
-                    : old.map((c) => (c.id === saved.id ? saved : c)),
-                );
-                setEditing(null);
-                setNotice(
-                  editing === "new"
-                    ? "班級已建立，你是這個班級的導師。"
-                    : "班級資料已更新。",
-                );
-              }}
-            />
-          </section>
-        )}
-        {deleting && (
-          <DeleteClassDialog
-            key={deleting.id}
-            cohort={deleting}
-            onCancel={() => setDeleting(null)}
-            onDeleted={(removed) => {
-              setClasses((old) => old.filter((c) => c.id !== removed.id));
-              setDeleting(null);
-              setEditing(null);
-              setError("");
-              setNotice(`「${removed.name}」及所屬資料已永久刪除，無法復原。`);
-            }}
+        {roster ? (
+          <StudentRoster
+            key={roster.id}
+            cohort={roster}
+            onBack={() => setRoster(null)}
           />
-        )}
-        {loading ? (
-          <p role="status">正在載入班級…</p>
-        ) : classes.length ? (
-          <section className="class-grid" aria-label="班級列表">
-            {classes.map((c) => (
-              <article className="class-card" key={c.id}>
-                <div className="card-top">
-                  <span className="class-symbol">▦</span>
-                  <span className="badge">
-                    {c.role === "homeroom" ? "導師" : "共同教師"}
-                  </span>
+        ) : (
+          <>
+            <header>
+              <p className="eyebrow">班級工作空間 / 我的班級</p>
+              <div className="page-title">
+                <div>
+                  <h1>我的班級</h1>
+                  <p className="muted">
+                    {teacher.display_name}，從這裡開始今天的班級日常。
+                  </p>
                 </div>
-                <h2>{c.name}</h2>
-                <p className="muted">
-                  {c.entry_year} 年入學 · 同一屆，一起成長
-                </p>
-                <div className="card-bottom">
-                  <span>
-                    <strong>{c.current_grade}</strong> 年級
-                  </span>
-                  {c.role === "homeroom" && (
+                {teacher.email_verified && (
+                  <button className="primary" onClick={() => setEditing("new")}>
+                    ＋ 新增班級
+                  </button>
+                )}
+              </div>
+            </header>
+            {error && (
+              <div role="alert" className="error">
+                {error}
+              </div>
+            )}
+            {notice && (
+              <div role="status" className="notice">
+                {notice}
+              </div>
+            )}
+            {!teacher.email_verified && (
+              <section className="verification">
+                <h2>再一步，完成 Email 驗證</h2>
+                <p>請開啟信箱中的驗證連結。完成後，就能建立你的第一個班級。</p>
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      action(async () => {
+                        const result = await api<Notice>(
+                          "/auth/resend-verification/",
+                          "POST",
+                          { email: teacher.email },
+                        );
+                        setNotice(result.detail);
+                      })
+                    }
+                  >
+                    重新寄送驗證信
+                  </button>
+                  <button
+                    className="primary"
+                    disabled={busy}
+                    onClick={() =>
+                      action(async () => {
+                        const current = await api<Teacher>("/auth/me/");
+                        onRefresh(current);
+                        if (!current.email_verified)
+                          setNotice("尚未完成驗證，請先開啟信件連結。");
+                      })
+                    }
+                  >
+                    我已驗證，重新確認
+                  </button>
+                </div>
+              </section>
+            )}
+            {editing && (
+              <section className="editor">
+                <ClassForm
+                  key={editing === "new" ? "new" : editing.id}
+                  cohort={editing === "new" ? undefined : editing}
+                  onCancel={() => setEditing(null)}
+                  onDelete={
+                    editing !== "new" ? () => setDeleting(editing) : undefined
+                  }
+                  onSave={async (values) => {
+                    const saved = await api<Cohort>(
+                      editing === "new"
+                        ? "/classes/"
+                        : `/classes/${editing.id}/`,
+                      editing === "new" ? "POST" : "PATCH",
+                      values,
+                    );
+                    setClasses((old) =>
+                      editing === "new"
+                        ? [...old, saved]
+                        : old.map((c) => (c.id === saved.id ? saved : c)),
+                    );
+                    setEditing(null);
+                    setNotice(
+                      editing === "new"
+                        ? "班級已建立，你是這個班級的導師。"
+                        : "班級資料已更新。",
+                    );
+                  }}
+                />
+              </section>
+            )}
+            {deleting && (
+              <DeleteClassDialog
+                key={deleting.id}
+                cohort={deleting}
+                onCancel={() => setDeleting(null)}
+                onDeleted={(removed) => {
+                  setClasses((old) => old.filter((c) => c.id !== removed.id));
+                  setDeleting(null);
+                  setEditing(null);
+                  setError("");
+                  setNotice(
+                    `「${removed.name}」及所屬資料已永久刪除，無法復原。`,
+                  );
+                }}
+              />
+            )}
+            {loading ? (
+              <p role="status">正在載入班級…</p>
+            ) : classes.length ? (
+              <section className="class-grid" aria-label="班級列表">
+                {classes.map((c) => (
+                  <article className="class-card" key={c.id}>
+                    <div className="card-top">
+                      <span className="class-symbol">▦</span>
+                      <span className="badge">
+                        {c.role === "homeroom" ? "導師" : "共同教師"}
+                      </span>
+                    </div>
+                    <h2>{c.name}</h2>
+                    <p className="muted">
+                      {c.entry_year} 年入學 · 同一屆，一起成長
+                    </p>
+                    <div className="card-bottom">
+                      <span>
+                        <strong>{c.current_grade}</strong> 年級
+                      </span>
+                      {c.role === "homeroom" && (
+                        <button
+                          className="text-button"
+                          onClick={() => setEditing(c)}
+                        >
+                          編輯班級 →
+                        </button>
+                      )}
+                    </div>
+                    {c.role === "homeroom" && (
+                      <button
+                        className="secondary full"
+                        onClick={() => {
+                          setNotice("");
+                          setRoster(c);
+                        }}
+                      >
+                        學生名單
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </section>
+            ) : (
+              !editing && (
+                <section className="empty-state">
+                  <div className="empty-icon" aria-hidden="true">
+                    ▦
+                  </div>
+                  <h2>你的第一個班級，從這裡開始</h2>
+                  <p>
+                    取個名字、設定入學年度，
+                    <br />
+                    為你和學生建立一個共同的空間。
+                  </p>
+                  {teacher.email_verified && (
                     <button
-                      className="text-button"
-                      onClick={() => setEditing(c)}
+                      className="primary"
+                      onClick={() => setEditing("new")}
                     >
-                      編輯班級 →
+                      建立第一個班級
                     </button>
                   )}
-                </div>
-              </article>
-            ))}
-          </section>
-        ) : (
-          !editing && (
-            <section className="empty-state">
-              <div className="empty-icon" aria-hidden="true">
-                ▦
-              </div>
-              <h2>你的第一個班級，從這裡開始</h2>
-              <p>
-                取個名字、設定入學年度，
-                <br />
-                為你和學生建立一個共同的空間。
-              </p>
-              {teacher.email_verified && (
-                <button className="primary" onClick={() => setEditing("new")}>
-                  建立第一個班級
-                </button>
-              )}
-            </section>
-          )
+                </section>
+              )
+            )}
+            <footer>一個班級，一段持續成長的故事。</footer>
+          </>
         )}
-        <footer>一個班級，一段持續成長的故事。</footer>
       </main>
     </div>
   );

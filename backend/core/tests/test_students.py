@@ -5,6 +5,152 @@ from core.models import User
 
 
 class StudentWorkflowTests(APITestCase):
+    def test_roster_rejects_other_teachers_pending_members_students_and_missing_csrf(self):
+        from core.models import ClassMember
+
+        outsider = User.objects.create_user(
+            username="outside", email="outside@example.com", password="Outside!2026"
+        )
+        client = APIClient()
+        for membership in [None, "pending", "approved"]:
+            if membership:
+                ClassMember.objects.update_or_create(
+                    cohort_id=self.cohort["id"],
+                    user=outsider,
+                    defaults={"role": "coTeacher", "approved": membership == "approved"},
+                )
+            client.force_login(outsider)
+            self.assertEqual(client.get(self.roster_url).status_code, 404)
+            self.assertEqual(
+                client.post(self.roster_url, {"text": "1\t小明\t00001"}).status_code, 404
+            )
+        client.logout()
+        self.assertEqual(client.get(self.roster_url).status_code, 403)
+        protected = APIClient(enforce_csrf_checks=True)
+        protected.force_login(self.owner)
+        self.assertEqual(
+            protected.post(self.roster_url, {"text": "1\t小明\t00001"}).status_code, 403
+        )
+        token = protected.get("/api/csrf/").json()["csrfToken"]
+        self.assertEqual(
+            protected.post(
+                self.roster_url, {"text": "1\t小明\t00001"}, HTTP_X_CSRFTOKEN=token
+            ).status_code,
+            200,
+        )
+        student = APIClient(enforce_csrf_checks=True)
+        credentials = {
+            "class_code": self.cohort["student_login_code"],
+            "student_number": "00001",
+            "password": "00001",
+        }
+        self.assertEqual(student.post("/api/student/login/", credentials).status_code, 403)
+        token = student.get("/api/csrf/").json()["csrfToken"]
+        self.assertEqual(
+            student.post("/api/student/login/", credentials, HTTP_X_CSRFTOKEN=token).status_code,
+            200,
+        )
+        self.assertEqual(
+            student.post(
+                "/api/student/change-password/", {"password": "Summer!Garden2026"}
+            ).status_code,
+            403,
+        )
+        token = student.get("/api/csrf/").json()["csrfToken"]
+        self.assertEqual(
+            student.post(
+                "/api/student/change-password/",
+                {"password": "Summer!Garden2026"},
+                HTTP_X_CSRFTOKEN=token,
+            ).status_code,
+            200,
+        )
+
+    def test_import_validates_limits_original_lines_and_conflicts_without_overwrite(self):
+        for text in [
+            "\n\t\n",
+            "座號\t姓名\t學號",
+            "x" * 100001,
+            "\n".join(f"{i}\t學生\t{i}" for i in range(1, 202)),
+        ]:
+            self.assertEqual(self.client.post(self.roster_url, {"text": text}).status_code, 400)
+        text = (
+            "\n座號\t姓名\t學號\n\n1\t 林 小明 \tAb001\n1\t林 小明\tAb001\n2\t不同\tAb001\n1\t另一位\tab001\n0\t錯誤\tzero\n10000\t錯誤\tlarge\n2\t錯誤\twhite space\n2\t"
+            + "名" * 81
+            + "\tlong\n2\t錯誤\t"
+            + "a" * 65
+            + "\n2\t小美\tab001"
+        )
+        result = self.client.post(self.roster_url, {"text": text}).json()
+        self.assertEqual(result["summary"], {"created": 2, "skipped": 1, "error": 7})
+        self.assertEqual([row["line"] for row in result["results"]], list(range(4, 14)))
+        roster = self.client.get(self.roster_url).json()
+        self.assertEqual(
+            [(s["name"], s["student_number"]) for s in roster],
+            [("林 小明", "Ab001"), ("小美", "ab001")],
+        )
+        code = self.cohort["student_login_code"]
+        changed = self.client.patch(
+            f"/api/classes/{self.cohort['id']}/",
+            {"student_login_code": "AAAAAAAAAA", "name": "新班名"},
+        ).json()
+        self.assertEqual(changed["student_login_code"], code)
+
+    def test_same_number_in_two_classes_has_independent_password_and_account_throttle(self):
+        self.client.post(self.roster_url, {"text": "1\t小明\t00001"})
+        other = self.client.post(
+            "/api/classes/", {"name": "另一班", "entry_year": 2026, "current_grade": 1}
+        ).json()
+        self.assertNotEqual(other["student_login_code"], self.cohort["student_login_code"])
+        self.client.post(f"/api/classes/{other['id']}/students/", {"text": "1\t小華\t00001"})
+        student = self.student_login()
+        self.assertEqual(
+            student.post(
+                "/api/student/change-password/", {"password": "Distinct!Garden2026"}
+            ).status_code,
+            200,
+        )
+        second = self.student_login(other)
+        self.assertEqual(
+            second.post(
+                "/api/student/change-password/", {"password": "Other!Garden2026"}
+            ).status_code,
+            200,
+        )
+        self.assertEqual(
+            second.get(
+                "/api/student/me/?student_number=00001&class_id=" + str(self.cohort["id"])
+            ).json()["name"],
+            "小華",
+        )
+        self.assertEqual(student.get(f"/api/classes/{other['id']}/").status_code, 403)
+        attacker = APIClient()
+        payload = {
+            "class_code": self.cohort["student_login_code"],
+            "student_number": "00001",
+            "password": "wrong",
+        }
+        for i in range(4):
+            self.assertEqual(
+                attacker.post(
+                    "/api/student/login/", payload, REMOTE_ADDR=f"192.0.2.{i}"
+                ).status_code,
+                400,
+            )
+        self.assertEqual(
+            attacker.post("/api/student/login/", payload, REMOTE_ADDR="192.0.2.20").status_code, 429
+        )
+        self.assertEqual(
+            self.student_login(other, "Other!Garden2026").get("/api/student/me/").json()["name"],
+            "小華",
+        )
+
+    def test_student_login_ip_throttle_covers_invalid_requests(self):
+        anonymous = APIClient()
+        for _ in range(30):
+            self.assertEqual(anonymous.post("/api/student/login/", {}).status_code, 400)
+        self.assertEqual(anonymous.post("/api/student/login/", {}).status_code, 429)
+
     def test_delete_class_erases_student_accounts_events_and_sessions_only_for_that_class(self):
         self.client.post(self.roster_url, {"text": "1\t小明\t00001"}, format="json")
         kept = self.client.post(
@@ -38,6 +184,19 @@ class StudentWorkflowTests(APITestCase):
         self.assertEqual(self.client.get("/api/auth/me/").status_code, 200)
         self.assertEqual(Student.objects.count(), 1)
         self.assertEqual(User.objects.count(), 2)
+        self.assertEqual(
+            APIClient()
+            .post(
+                "/api/student/login/",
+                {
+                    "class_code": self.cohort["student_login_code"],
+                    "student_number": "00001",
+                    "password": "00001",
+                },
+            )
+            .status_code,
+            400,
+        )
 
     def setUp(self):
         self.owner = User.objects.create_user(
