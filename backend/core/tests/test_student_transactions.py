@@ -50,6 +50,82 @@ class StudentTransactionTests(TransactionTestCase):
         self.assertEqual(sorted(r.json()["summary"]["skipped"] for r in responses), [0, 2])
         self.assertEqual(len(self.client.get(self.url).json()), 2)
 
+    def test_student_delete_racing_edit_erases_history_and_preserves_peer(self):
+        self.client.post(self.url, {"text": "1\t小明\t00001\n2\t小華\t00002"})
+        removed, kept = self.client.get(self.url).json()
+        endpoint = f"{self.url}{removed['id']}/"
+        responses = self.parallel(
+            lambda client: client.patch(endpoint, {"name": "改名"}),
+            lambda client: client.delete(
+                endpoint, {"confirmation_student_number": "00001"}, format="json"
+            ),
+        )
+        self.assertIn(responses[0].status_code, [200, 404])
+        self.assertEqual(responses[1].status_code, 200)
+        self.assertEqual(self.client.get(self.url).json(), [kept])
+        self.assertFalse(Student.objects.filter(pk=removed["id"]).exists())
+        self.assertFalse(StudentAuditEvent.objects.filter(student_id=removed["id"]).exists())
+
+    def test_student_delete_session_failure_restores_account_history_and_login(self):
+        self.client.post(self.url, {"text": "1\t小明\t00001"})
+        before = self.client.get(self.url).json()
+        endpoint = f"{self.url}{before[0]['id']}/"
+        self.client.patch(endpoint, {"name": "修改姓名"})
+        before = self.client.get(self.url).json()
+        audit_url = f"/api/classes/{self.cohort['id']}/student-events/"
+        events = self.client.get(audit_url).json()
+        student = APIClient()
+        self.assertEqual(
+            student.post(
+                "/api/student/login/",
+                {
+                    "class_code": self.cohort["student_login_code"],
+                    "student_number": "00001",
+                    "password": "00001",
+                },
+            ).status_code,
+            200,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                CREATE FUNCTION cm_test_reject_session_delete() RETURNS trigger AS $$
+                BEGIN
+                    RAISE EXCEPTION 'test session deletion failure';
+                END;
+                $$ LANGUAGE plpgsql;
+                CREATE TRIGGER cm_test_session_delete BEFORE DELETE ON django_session
+                FOR EACH ROW EXECUTE FUNCTION cm_test_reject_session_delete();
+            """)
+        self.client.raise_request_exception = False
+        try:
+            self.assertEqual(
+                self.client.delete(
+                    endpoint,
+                    {
+                        "confirmation_student_number": "00001",
+                    },
+                    format="json",
+                ).status_code,
+                500,
+            )
+            self.assertEqual(self.client.get(self.url).json(), before)
+            self.assertEqual(self.client.get(audit_url).json(), events)
+            self.assertEqual(student.get("/api/auth/me/").status_code, 200)
+        finally:
+            with connection.cursor() as cursor:
+                cursor.execute("DROP TRIGGER cm_test_session_delete ON django_session")
+                cursor.execute("DROP FUNCTION cm_test_reject_session_delete()")
+        self.assertEqual(
+            student.post(
+                "/api/student/change-password/",
+                {
+                    "password": "Restored!Garden2026",
+                },
+            ).status_code,
+            200,
+        )
+        self.assertEqual(student.get("/api/student/me/").json()["name"], "修改姓名")
+
     def test_concurrent_corrections_cannot_claim_the_same_seat(self):
         self.client.post(self.url, {"text": "1\t小明\t00001\n2\t小華\t00002"})
         first, second = self.client.get(self.url).json()

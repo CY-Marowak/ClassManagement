@@ -38,6 +38,7 @@ const fieldNames: Record<string, string> = {
   current_grade: "目前年級",
   token: "驗證連結",
   confirmation_name: "確認班級名稱",
+  confirmation_student_number: "確認學號",
   class_code: "班級登入碼",
   student_number: "學號",
   text: "名單",

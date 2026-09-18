@@ -3,6 +3,7 @@ import { api, type Cohort, type Student } from "./api";
 import { AnimalAvatar } from "./AnimalAvatar";
 import { StudentManagementDialog } from "./StudentManagementDialog";
 import { StudentAuditHistory } from "./StudentAuditHistory";
+import { DeleteStudentDialog } from "./DeleteStudentDialog";
 
 type ImportResult = {
   summary: { created: number; skipped: number; error: number };
@@ -10,6 +11,8 @@ type ImportResult = {
     line: number;
     status: "created" | "skipped" | "error";
     message: string;
+    cells: string[];
+    raw: string;
   }[];
 };
 const statuses = { created: "新增", skipped: "略過", error: "待修正" };
@@ -28,6 +31,8 @@ export function StudentRoster({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [resultFilter, setResultFilter] = useState("all");
+  const [deleting, setDeleting] = useState<Student | null>(null);
   const [managing, setManaging] = useState<{
     student: Student;
     mode: "edit" | "reset";
@@ -50,7 +55,9 @@ export function StudentRoster({
     setError("");
     setResult(null);
     try {
-      setResult(await api<ImportResult>(endpoint, "POST", { text }));
+      const imported = await api<ImportResult>(endpoint, "POST", { text });
+      setResult(imported);
+      setResultFilter(imported.summary.error ? "error" : "all");
       setStudents(await api<Student[]>(endpoint));
       setHistoryRevision((n) => n + 1);
     } catch (e) {
@@ -85,6 +92,22 @@ export function StudentRoster({
       )}
       {showHistory && (
         <StudentAuditHistory key={historyRevision} cohortId={cohort.id} />
+      )}
+      {deleting && (
+        <DeleteStudentDialog
+          student={deleting}
+          endpoint={endpoint}
+          onCancel={() => setDeleting(null)}
+          onDeleted={(removed, message) => {
+            setStudents((old) =>
+              old.filter((student) => student.id !== removed.id),
+            );
+            setDeleting(null);
+            setNotice(message);
+            setResult(null);
+            setHistoryRevision((n) => n + 1);
+          }}
+        />
       )}
       {managing && (
         <StudentManagementDialog
@@ -145,7 +168,8 @@ export function StudentRoster({
           </p>
         )}
       </section>
-      <section className="roster-panel">
+      <details className="roster-panel add-students">
+        <summary>加入學生</summary>
         <h2>貼上名單，建立學生</h2>
         <p className="muted small">
           從試算表複製「座號、姓名、學號」三欄，最多 200
@@ -180,23 +204,56 @@ export function StudentRoster({
             </p>
             <details open={result.summary.error > 0}>
               <summary>逐行匯入結果</summary>
-              <ul className="import-results">
-                {result.results.map((row) => (
-                  <li
-                    key={row.line}
-                    className={row.status === "error" ? "import-error" : ""}
-                  >
-                    <strong>
-                      第 {row.line} 行 · {statuses[row.status]}
-                    </strong>
-                    <span>{row.message}</span>
-                  </li>
-                ))}
+              <label className="import-filter">
+                結果篩選
+                <select
+                  value={resultFilter}
+                  onChange={(event) => setResultFilter(event.target.value)}
+                >
+                  <option value="error">
+                    只看待修正（{result.summary.error}）
+                  </option>
+                  <option value="all">
+                    全部結果（{result.results.length}）
+                  </option>
+                </select>
+              </label>
+              {resultFilter === "error" && result.summary.error === 0 && (
+                <p className="muted small">沒有待修正的資料。</p>
+              )}
+              <ul className="import-results" aria-label="逐行匯入結果">
+                {result.results
+                  .filter(
+                    (row) => resultFilter === "all" || row.status === "error",
+                  )
+                  .map((row) => (
+                    <li
+                      key={row.line}
+                      className={row.status === "error" ? "import-error" : ""}
+                    >
+                      <strong>
+                        第 {row.line} 行 · {statuses[row.status]}
+                        {row.cells.length === 3 && (
+                          <>
+                            ｜座號 {row.cells[0] || "空白"} · 姓名{" "}
+                            {row.cells[1] || "空白"} · 學號{" "}
+                            {row.cells[2] || "空白"}
+                          </>
+                        )}
+                      </strong>
+                      {row.cells.length !== 3 && (
+                        <span className="import-raw">
+                          原始資料：{row.raw.replaceAll("\t", " │ ")}
+                        </span>
+                      )}
+                      <span>{row.message}</span>
+                    </li>
+                  ))}
               </ul>
             </details>
           </>
         )}
-      </section>
+      </details>
       <section className="roster-panel">
         <h2>學生名單</h2>
         <p className="muted small table-scroll-hint">
@@ -246,6 +303,16 @@ export function StudentRoster({
                           }}
                         >
                           重設密碼
+                        </button>
+                        <button
+                          className="text-button danger-text"
+                          disabled={busy}
+                          onClick={() => {
+                            setNotice("");
+                            setDeleting(student);
+                          }}
+                        >
+                          刪除學生
                         </button>
                       </div>
                     </td>

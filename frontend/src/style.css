@@ -186,6 +186,20 @@ textarea:focus {
   max-height: 320px;
   overflow: auto;
 }
+.add-students > summary {
+  font-size: 19px;
+  color: #365c49;
+}
+.add-students[open] > summary {
+  margin-bottom: 22px;
+}
+.import-filter {
+  max-width: 260px;
+}
+.import-raw {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .import-results li {
   padding: 10px 12px;
   border-bottom: 1px solid #edf0e9;

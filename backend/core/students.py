@@ -70,8 +70,14 @@ class StudentsView(APIView):
             )
             cohort = get_object_or_404(Cohort.objects.select_for_update(), pk=pk)
             for number, line in lines:
-                result = {"line": number, "status": "error", "message": ""}
                 cells = [c.strip() for c in line.split("\t")]
+                result = {
+                    "line": number,
+                    "status": "error",
+                    "message": "",
+                    "cells": cells,
+                    "raw": line,
+                }
                 if len(cells) != 3:
                     result["message"] = "需要座號、姓名、學號三欄，請從表格複製，以 Tab 分隔。"
                 else:

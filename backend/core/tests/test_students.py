@@ -5,6 +5,30 @@ from core.models import User
 
 
 class StudentWorkflowTests(APITestCase):
+    def test_import_feedback_identifies_submitted_rows_even_when_invalid_or_conflicting(self):
+        self.client.post(self.roster_url, {"text": "1\t原姓名\t00001"})
+        lines = [
+            "座號\t姓名\t學號",
+            "",
+            "2\t送入姓名\t00001",
+            "3\t缺欄",
+            "4\t\t00004",
+            "5\t多欄\t00005\t額外",
+            "6\t<script>文字</script>\t00006",
+            "1\t原姓名\t00001",
+        ]
+        response = self.client.post(self.roster_url, {"text": "\n".join(lines)})
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result["summary"], {"created": 1, "skipped": 1, "error": 4})
+        self.assertEqual([row["line"] for row in result["results"]], [3, 4, 5, 6, 7, 8])
+        self.assertEqual(result["results"][0]["cells"], ["2", "送入姓名", "00001"])
+        self.assertEqual(result["results"][1]["raw"], "3\t缺欄")
+        self.assertEqual(result["results"][2]["cells"], ["4", "", "00004"])
+        self.assertEqual(result["results"][3]["raw"], "5\t多欄\t00005\t額外")
+        self.assertEqual(result["results"][4]["cells"], ["6", "<script>文字</script>", "00006"])
+        self.assertEqual(result["results"][5]["cells"], ["1", "原姓名", "00001"])
+
     def test_roster_rejects_other_teachers_pending_members_students_and_missing_csrf(self):
         from core.models import ClassMember
 

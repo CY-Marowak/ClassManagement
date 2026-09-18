@@ -35,6 +35,9 @@ test("teacher imports and corrects roster; student changes password, keeps avata
   await page.getByLabel("班級名稱").fill("星光班");
   await page.getByRole("button", { name: "建立班級", exact: true }).click();
   await page.getByRole("button", { name: "學生名單" }).click();
+  await expect(page.getByLabel("貼上學生名單")).toBeHidden();
+  await page.getByText("加入學生", { exact: true }).click();
+  await expect(page.getByLabel("貼上學生名單")).toBeVisible();
   const rows = Array.from(
     { length: 28 },
     (_, i) => `${i + 1}\t同學${i + 1}\t${String(i + 1).padStart(5, "0")}`,
@@ -47,6 +50,21 @@ test("teacher imports and corrects roster; student changes password, keeps avata
     "新增 28 · 略過 0 · 待修正 2",
     { timeout: 30000 },
   );
+  const importResults = page.getByRole("list", { name: "逐行匯入結果" });
+  await expect(importResults.getByRole("listitem")).toHaveCount(2);
+  await expect(importResults).toContainText("第 30 行 · 待修正");
+  await expect(importResults).toContainText("座號 30 · 姓名 衝突 · 學號 00001");
+  await expect(importResults).toContainText("原始資料：29 │ 缺欄");
+  await page.getByLabel("結果篩選").selectOption("all");
+  await expect(importResults.getByRole("listitem")).toHaveCount(30);
+  await page.getByLabel("結果篩選").selectOption("error");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await importResults.screenshot({ path: ".local/import-errors-mobile.png" });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
   await page
     .getByLabel("貼上學生名單")
     .fill("29\t同學29\t00029\n30\t同學30\t00030");
@@ -54,10 +72,17 @@ test("teacher imports and corrects roster; student changes password, keeps avata
   await expect(page.getByRole("status")).toContainText(
     "新增 2 · 略過 0 · 待修正 0",
   );
+  await page.getByText("逐行匯入結果", { exact: true }).click();
+  await expect(page.getByLabel("結果篩選")).toHaveValue("all");
+  await expect(importResults.getByRole("listitem")).toHaveCount(2);
   await expect(
     page.getByRole("table", { name: "學生名單" }).getByRole("row"),
   ).toHaveCount(31);
+  await page.getByRole("button", { name: "返回我的班級" }).click();
+  await page.getByRole("button", { name: "學生名單" }).click();
+  await expect(page.getByLabel("貼上學生名單")).toBeHidden();
   const studentLink = await page.getByLabel("學生登入連結").inputValue();
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: ".local/roster-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: ".local/roster-mobile.png", fullPage: true });
@@ -205,6 +230,49 @@ test("teacher imports and corrects roster; student changes password, keeps avata
   await history.getByRole("button", { name: "下一頁" }).click();
   await expect(history).toContainText("第 2 頁");
   await expect(history.getByRole("button", { name: "下一頁" })).toBeDisabled();
+  await editedRow
+    .getByRole("button", { name: "刪除學生", exact: true })
+    .click();
+  const deleting = page.getByRole("dialog", { name: "永久刪除學生" });
+  await expect(deleting).toContainText("林小明");
+  await expect(deleting).toContainText("全部歷史");
+  await expect(deleting).toContainText("無法復原");
+  const confirmDelete = deleting.getByRole("button", {
+    name: "確認永久刪除學生",
+  });
+  await expect(confirmDelete).toBeDisabled();
+  await deleting.getByLabel("輸入完整學號").fill("0090");
+  await expect(confirmDelete).toBeDisabled();
+  await deleting.getByRole("button", { name: "取消" }).click();
+  await expect(editedRow).toBeVisible();
+  await student.reload();
+  await expect(
+    student.getByRole("heading", { name: "林小明", exact: true }),
+  ).toBeVisible();
+  await editedRow
+    .getByRole("button", { name: "刪除學生", exact: true })
+    .click();
+  await deleting.getByLabel("輸入完整學號").fill("00901");
+  await deleting.screenshot({ path: ".local/student-delete-desktop.png" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await deleting.screenshot({ path: ".local/student-delete-mobile.png" });
+  await confirmDelete.click();
+  await expect(deleting).toHaveCount(0);
+  await expect(editedRow).toHaveCount(0);
+  await expect(roster.getByRole("row")).toHaveCount(30);
+  await expect(history).toContainText("共 29 筆");
+  await expect(history).not.toContainText("林小明");
+  await student.reload();
+  await expect(
+    student.getByRole("heading", { name: "林小明", exact: true }),
+  ).toHaveCount(0);
+  await student.goto(studentLink);
+  await student.getByLabel("學號", { exact: true }).fill("00002");
+  await student.getByLabel("密碼", { exact: true }).fill("00002");
+  await student.getByRole("button", { name: "學生登入", exact: true }).click();
+  await expect(
+    student.getByRole("heading", { name: "設定自己的密碼" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "返回我的班級" }).click();
   await page.getByRole("button", { name: "編輯班級" }).click();
   await page.getByRole("button", { name: "永久刪除班級", exact: true }).click();
@@ -213,7 +281,7 @@ test("teacher imports and corrects roster; student changes password, keeps avata
   await expect(page.getByRole("status")).toContainText("已永久刪除");
   await student.reload();
   await expect(
-    student.getByRole("heading", { name: "林小明", exact: true }),
+    student.getByRole("heading", { name: "設定自己的密碼", exact: true }),
   ).toHaveCount(0);
   await context.close();
 });

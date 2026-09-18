@@ -1,4 +1,3 @@
-from django.contrib.sessions.models import Session
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -8,6 +7,7 @@ from rest_framework.views import APIView
 
 from .models import ClassMember, Cohort, Student, StudentAuditEvent, User
 from .permissions import IsTeacher
+from .sessions import revoke_user_sessions
 from .students import StudentRowSerializer, student_data
 
 
@@ -27,8 +27,35 @@ class EditStudentSerializer(StudentRowSerializer):
         return attrs
 
 
+class DeleteStudentSerializer(serializers.Serializer):
+    confirmation_student_number = serializers.CharField(max_length=64, trim_whitespace=False)
+
+
 class StudentDetailView(APIView):
     permission_classes = [IsTeacher]
+
+    def delete(self, request, pk, student_id):
+        with transaction.atomic():
+            require_homeroom(request.user, pk, lock=True)
+            get_object_or_404(Cohort.objects.select_for_update(), pk=pk)
+            student = get_object_or_404(
+                Student.objects.select_for_update(), cohort_id=pk, pk=student_id
+            )
+            form = DeleteStudentSerializer(data=request.data)
+            form.is_valid(raise_exception=True)
+            if form.validated_data["confirmation_student_number"] != student.student_number:
+                raise serializers.ValidationError(
+                    {
+                        "confirmation_student_number": "請輸入目前完整學號；若資料已變更，請重新載入學生名單。"
+                    }
+                )
+            user_id = student.user_id
+            user = get_object_or_404(
+                User.objects.select_for_update(), pk=user_id, account_type="student"
+            )
+            user.delete()  # Cascades through the student to all of their audit history.
+            revoke_user_sessions([user_id])
+        return Response({"detail": "學生帳號及全部歷史已永久刪除，無法復原；所有原登入已失效。"})
 
     def patch(self, request, pk, student_id):
         with transaction.atomic():
@@ -81,9 +108,7 @@ class ResetStudentPasswordView(APIView):
             user.save(update_fields=["password"])
             student.must_change_password = True
             student.save(update_fields=["must_change_password"])
-            for session in Session.objects.all().iterator():
-                if session.get_decoded().get("_auth_user_id") == str(user.pk):
-                    session.delete()
+            revoke_user_sessions([user.pk])
             StudentAuditEvent.objects.create(
                 student=student,
                 actor=request.user,
