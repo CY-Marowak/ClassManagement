@@ -246,10 +246,12 @@ class StudentManagementTests(APITestCase):
             200,
         )
 
-    def test_initial_password_survives_number_edit_and_events_paginate_with_stable_snapshots(self):
+    def test_initial_password_survives_number_edit(self):
         self.client.patch(self.detail_url, {"student_number": "00901"})
         student = self.login("00901", "00001")
         self.assertTrue(student.get("/api/auth/me/").json()["must_change_password"])
+
+    def test_events_paginate_with_stable_student_and_actor_snapshots(self):
         for i in range(26):
             self.assertEqual(
                 self.client.patch(self.detail_url, {"name": f"小明{i}"}).status_code, 200
@@ -258,13 +260,13 @@ class StudentManagementTests(APITestCase):
         self.owner.save(update_fields=["display_name"])
         first = self.client.get(self.audit_url).json()
         second = self.client.get(self.audit_url + "?page=2").json()
-        self.assertEqual(first["count"], 29)
+        self.assertEqual(first["count"], 28)
         self.assertEqual(len(first["results"]), 25)
-        self.assertEqual(len(second["results"]), 4)
+        self.assertEqual(len(second["results"]), 3)
         self.assertTrue(first["next"])
         self.assertIsNone(second["next"])
         events = first["results"] + second["results"]
-        self.assertEqual(len({e["id"] for e in events}), 29)
+        self.assertEqual(len({e["id"] for e in events}), 28)
         self.assertTrue(all(e["actor_name"] == "林老師" for e in events))
         self.assertEqual(events[0]["student_name"], "小明25")
         self.assertEqual(events[-1]["student_name"], "小明")
