@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type Cohort, type Student } from "./api";
 import { AnimalAvatar } from "./AnimalAvatar";
+import { StudentManagementDialog } from "./StudentManagementDialog";
+import { StudentAuditHistory } from "./StudentAuditHistory";
 
 type ImportResult = {
   summary: { created: number; skipped: number; error: number };
@@ -26,6 +28,13 @@ export function StudentRoster({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [managing, setManaging] = useState<{
+    student: Student;
+    mode: "edit" | "reset";
+  } | null>(null);
+  const [notice, setNotice] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyRevision, setHistoryRevision] = useState(0);
   const endpoint = `/classes/${cohort.id}/students/`;
   const link = `${location.origin}${location.pathname}#student-login?class=${cohort.student_login_code}`;
   useEffect(() => {
@@ -43,6 +52,7 @@ export function StudentRoster({
     try {
       setResult(await api<ImportResult>(endpoint, "POST", { text }));
       setStudents(await api<Student[]>(endpoint));
+      setHistoryRevision((n) => n + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "匯入失敗，請稍後重試。");
     } finally {
@@ -60,7 +70,40 @@ export function StudentRoster({
           <h1>{cohort.name}</h1>
           <p className="muted">{students.length} 位學生 · 依座號排序</p>
         </div>
+        <button
+          className="secondary"
+          aria-expanded={showHistory}
+          onClick={() => setShowHistory(!showHistory)}
+        >
+          {showHistory ? "收起操作紀錄" : "操作紀錄"}
+        </button>
       </div>
+      {notice && (
+        <p className="notice" role="status">
+          {notice}
+        </p>
+      )}
+      {showHistory && (
+        <StudentAuditHistory key={historyRevision} cohortId={cohort.id} />
+      )}
+      {managing && (
+        <StudentManagementDialog
+          student={managing.student}
+          mode={managing.mode}
+          endpoint={endpoint}
+          onCancel={() => setManaging(null)}
+          onComplete={(saved, message) => {
+            setStudents((old) =>
+              old
+                .map((student) => (student.id === saved.id ? saved : student))
+                .sort((a, b) => a.seat_number - b.seat_number),
+            );
+            setNotice(message);
+            setManaging(null);
+            setHistoryRevision((n) => n + 1);
+          }}
+        />
+      )}
       {error && (
         <p className="error" role="alert">
           {error}
@@ -156,6 +199,9 @@ export function StudentRoster({
       </section>
       <section className="roster-panel">
         <h2>學生名單</h2>
+        <p className="muted small table-scroll-hint">
+          名單可左右滑動，查看完整資料與管理操作。
+        </p>
         {loading ? (
           <p role="status">正在載入名單…</p>
         ) : students.length ? (
@@ -167,6 +213,7 @@ export function StudentRoster({
                   <th>姓名</th>
                   <th>學號</th>
                   <th>角色</th>
+                  <th>管理</th>
                 </tr>
               </thead>
               <tbody>
@@ -177,6 +224,30 @@ export function StudentRoster({
                     <td>{student.student_number}</td>
                     <td>
                       <AnimalAvatar animal={student.avatar} />
+                    </td>
+                    <td>
+                      <div className="student-actions">
+                        <button
+                          className="text-button"
+                          disabled={busy}
+                          onClick={() => {
+                            setNotice("");
+                            setManaging({ student, mode: "edit" });
+                          }}
+                        >
+                          修改資料
+                        </button>
+                        <button
+                          className="text-button danger-text"
+                          disabled={busy}
+                          onClick={() => {
+                            setNotice("");
+                            setManaging({ student, mode: "reset" });
+                          }}
+                        >
+                          重設密碼
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

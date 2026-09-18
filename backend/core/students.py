@@ -10,7 +10,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ClassMember, Cohort, Student, StudentCreatedEvent, User
+from .models import ClassMember, Cohort, Student, StudentAuditEvent, User
 from .permissions import IsReadyUser, IsStudent, IsTeacher
 from .throttling import consume
 from .views import PublicAuthView, user_data
@@ -117,10 +117,11 @@ class StudentsView(APIView):
                                 student_number=values["student_number"],
                                 avatar=secrets.choice(["cat", "dog", "rabbit"]),
                             )
-                            StudentCreatedEvent.objects.create(
+                            StudentAuditEvent.objects.create(
                                 student=student,
                                 actor=request.user,
                                 actor_name=request.user.display_name,
+                                student_name=user.display_name,
                             )
                             result.update(status="created", message="已建立。")
                 results.append(result)

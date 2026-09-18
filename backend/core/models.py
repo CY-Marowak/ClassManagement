@@ -100,8 +100,20 @@ class Student(models.Model):
         ]
 
 
-class StudentCreatedEvent(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="creation_events")
+class StudentAuditEvent(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="audit_events")
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     actor_name = models.CharField(max_length=80)
     created_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(
+        max_length=20,
+        choices=[
+            ("created", "建立學生"),
+            ("profile_updated", "修改資料"),
+            ("password_reset", "重設密碼"),
+        ],
+        default="created",
+    )
+    student_name = models.CharField(max_length=80)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)

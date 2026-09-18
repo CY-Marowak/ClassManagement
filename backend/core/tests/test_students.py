@@ -172,7 +172,7 @@ class StudentWorkflowTests(APITestCase):
         self.assertFalse(Student.objects.filter(pk=student_id).exists())
         self.assertFalse(User.objects.filter(pk=user_id).exists())
         self.assertFalse(
-            apps.get_model("core", "StudentCreatedEvent")
+            apps.get_model("core", "StudentAuditEvent")
             .objects.filter(student_id=student_id)
             .exists()
         )
