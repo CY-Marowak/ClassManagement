@@ -80,6 +80,9 @@ test("teacher imports and corrects roster; student changes password, keeps avata
   ).toHaveCount(31);
   await page.getByRole("button", { name: "返回我的班級" }).click();
   await page.getByRole("button", { name: "學生名單" }).click();
+  await expect(
+    page.getByRole("table", { name: "學生名單" }).getByRole("row"),
+  ).toHaveCount(31);
   await expect(page.getByLabel("貼上學生名單")).toBeHidden();
   const studentLink = await page.getByLabel("學生登入連結").inputValue();
   await page.setViewportSize({ width: 1440, height: 1000 });
