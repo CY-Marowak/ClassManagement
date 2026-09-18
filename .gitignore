@@ -12,8 +12,7 @@ __pycache__/
 playwright-report/
 test-results/
 *.tsbuildinfo
-my_test
-my_test.md
+my_test/
 
 # Local IDE state and indexes
 .vs/
