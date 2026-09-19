@@ -1,10 +1,22 @@
 from core import views
 from core.cohorts import ClassDetailView, ClassesView
+from core.memberships import (
+    TeacherApplicationsView,
+    TeacherCodeView,
+    TeacherDecisionView,
+    TeacherEventsView,
+    TeachersView,
+)
 from core.student_management import ResetStudentPasswordView, StudentDetailView, StudentEventsView
 from core.students import StudentLoginView, StudentMeView, StudentPasswordView, StudentsView
 from django.urls import path
 
 urlpatterns = [
+    path("api/teacher-applications/", TeacherApplicationsView.as_view()),
+    path("api/classes/<int:pk>/teachers/", TeachersView.as_view()),
+    path("api/classes/<int:pk>/teachers/<int:member_id>/", TeacherDecisionView.as_view()),
+    path("api/classes/<int:pk>/teacher-events/", TeacherEventsView.as_view()),
+    path("api/classes/<int:pk>/teacher-code/", TeacherCodeView.as_view()),
     path("api/classes/", ClassesView.as_view()),
     path("api/classes/<int:pk>/", ClassDetailView.as_view()),
     path("api/classes/<int:pk>/students/", StudentsView.as_view()),

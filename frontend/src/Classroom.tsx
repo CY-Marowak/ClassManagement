@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, type Cohort, type Notice, type Teacher } from "./api";
 import { StudentRoster } from "./StudentRoster";
+import { TeacherApplications } from "./TeacherApplications";
+import { TeacherManagement } from "./TeacherManagement";
 
 function ClassForm({
   cohort,
@@ -223,6 +225,7 @@ export function Classroom({
 }) {
   const [classes, setClasses] = useState<Cohort[]>([]);
   const [roster, setRoster] = useState<Cohort | null>(null);
+  const [teachers, setTeachers] = useState<Cohort | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Cohort | "new" | null>(null);
   const [deleting, setDeleting] = useState<Cohort | null>(null);
@@ -255,7 +258,14 @@ export function Classroom({
         </a>
         <div className="side-menu">
           <p className="eyebrow">工作空間</p>
-          <a className="active" href="#classes" onClick={() => setRoster(null)}>
+          <a
+            className="active"
+            href="#classes"
+            onClick={() => {
+              setRoster(null);
+              setTeachers(null);
+            }}
+          >
             ▦ <span>我的班級</span>
           </a>
         </div>
@@ -280,7 +290,13 @@ export function Classroom({
         </div>
       </aside>
       <main className="workspace-main">
-        {roster ? (
+        {teachers ? (
+          <TeacherManagement
+            key={teachers.id}
+            cohort={teachers}
+            onBack={() => setTeachers(null)}
+          />
+        ) : roster ? (
           <StudentRoster
             key={roster.id}
             cohort={roster}
@@ -351,6 +367,13 @@ export function Classroom({
                   </button>
                 </div>
               </section>
+            )}
+            {teacher.email_verified && (
+              <TeacherApplications
+                onClassesChanged={async () =>
+                  setClasses(await api<Cohort[]>("/classes/"))
+                }
+              />
             )}
             {editing && (
               <section className="editor">
@@ -429,6 +452,14 @@ export function Classroom({
                         </button>
                       )}
                     </div>
+                    {c.role === "homeroom" && (
+                      <button
+                        className="secondary full"
+                        onClick={() => setTeachers(c)}
+                      >
+                        教師管理
+                      </button>
+                    )}
                     {c.role === "homeroom" && (
                       <button
                         className="secondary full"

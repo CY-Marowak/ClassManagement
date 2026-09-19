@@ -33,7 +33,14 @@ def student_login_code():
     return secrets.token_hex(5).upper()
 
 
+def teacher_application_code():
+    return "T-" + secrets.token_hex(8).upper()
+
+
 class Cohort(models.Model):
+    application_code = models.CharField(
+        max_length=18, unique=True, default=teacher_application_code, editable=False
+    )
     student_login_code = models.CharField(
         max_length=10, unique=True, default=student_login_code, editable=False
     )
@@ -54,6 +61,16 @@ class ClassMember(models.Model):
         max_length=12, choices=[("homeroom", "導師"), ("coTeacher", "共同教師")]
     )
     approved = models.BooleanField(default=True)
+    inactive_status = models.CharField(
+        max_length=10,
+        choices=[("pending", "待審核"), ("rejected", "已拒絕"), ("removed", "已移除")],
+        default="pending",
+    )
+    revision = models.PositiveIntegerField(default=1)
+
+    @property
+    def status(self):
+        return "approved" if self.approved else self.inactive_status
 
     class Meta:
         constraints = [
@@ -70,6 +87,18 @@ class AuthRateBucket(models.Model):
     key = models.CharField(max_length=64, primary_key=True)
     started_at = models.DateTimeField()
     count = models.PositiveIntegerField(default=0)
+
+
+class TeacherAuditEvent(models.Model):
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE, related_name="teacher_events")
+    member = models.ForeignKey(ClassMember, on_delete=models.CASCADE, null=True)
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    actor_name = models.CharField(max_length=80)
+    teacher_name = models.CharField(max_length=80, blank=True)
+    action = models.CharField(max_length=20)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Student(models.Model):

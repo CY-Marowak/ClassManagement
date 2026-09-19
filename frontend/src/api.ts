@@ -40,6 +40,7 @@ const fieldNames: Record<string, string> = {
   confirmation_name: "確認班級名稱",
   confirmation_student_number: "確認學號",
   class_code: "班級登入碼",
+  application_code: "教師申請碼",
   student_number: "學號",
   text: "名單",
 };

@@ -703,6 +703,50 @@ small {
 .danger-text {
   color: #a12c24;
 }
+.join-class {
+  margin-bottom: 24px;
+}
+.application-form {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.application-form label {
+  flex: 1 1 200px;
+  margin: 0;
+}
+.application-form button {
+  flex-shrink: 0;
+}
+.membership-list {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+}
+.membership-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid #e3e8dd;
+}
+.membership-list li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.membership-list p {
+  margin: 5px 0 0;
+}
+.teacher-code {
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+.class-card .full + .full {
+  margin-top: 10px;
+}
 .danger-button {
   padding: 11px 20px;
   border-radius: 9px;
