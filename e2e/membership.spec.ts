@@ -62,7 +62,7 @@ test("co-teacher applies, owner rotates code and reviews, removal requires a fre
   await colleague.getByLabel("輸入教師申請碼").fill(code);
   await colleague.getByRole("button", { name: "送出申請" }).click();
   const applications = colleague.getByRole("region", { name: "加入班級" });
-  await expect(applications).toContainText("等待審核");
+  await expect(applications.locator(".badge")).toHaveText("等待審核");
   await expect(applications).toContainText("共同教學班");
   await expect(applications).toContainText("導師林");
   await expect(
@@ -83,6 +83,9 @@ test("co-teacher applies, owner rotates code and reviews, removal requires a fre
     .getByLabel("教師申請碼", { exact: true })
     .inputValue();
   await page.getByRole("button", { name: "批准", exact: true }).click();
+  await expect(page.getByRole("region", { name: "教師成員" })).toContainText(
+    "已加入",
+  );
   await colleague.getByRole("button", { name: "更新申請狀態" }).click();
   await expect(colleague.locator(".class-card")).toContainText("共同教學班");
   await expect(
@@ -98,6 +101,9 @@ test("co-teacher applies, owner rotates code and reviews, removal requires a fre
   );
   await page.getByRole("button", { name: "移除", exact: true }).click();
   await page.getByRole("button", { name: "確認移除", exact: true }).click();
+  await expect(page.getByRole("region", { name: "教師成員" })).toContainText(
+    "已移除",
+  );
   await colleague.getByRole("button", { name: "更新申請狀態" }).click();
   await expect(colleague.locator(".class-card")).toHaveCount(0);
   await expect(applications).toContainText("已移除");
@@ -106,10 +112,13 @@ test("co-teacher applies, owner rotates code and reviews, removal requires a fre
   await expect(applications.getByRole("alert")).toBeVisible();
   await colleague.getByLabel("輸入教師申請碼").fill(newCode);
   await colleague.getByRole("button", { name: "送出申請" }).click();
-  await expect(applications).toContainText("等待審核");
+  await expect(applications.locator(".badge")).toHaveText("等待審核");
   await expect(colleague.locator(".class-card")).toHaveCount(0);
   await page.getByRole("button", { name: "重新整理教師" }).click();
   await page.getByRole("button", { name: "拒絕", exact: true }).click();
+  await expect(page.getByRole("region", { name: "教師成員" })).toContainText(
+    "已拒絕",
+  );
   await colleague.getByRole("button", { name: "更新申請狀態" }).click();
   await expect(applications).toContainText("已拒絕");
   await page.getByRole("button", { name: "教師操作紀錄", exact: true }).click();
