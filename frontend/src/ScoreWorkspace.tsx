@@ -78,7 +78,7 @@ export function ScoreWorkspace({
         ...payload,
         request_id: requestId,
       });
-      requests.current.clear();
+      requests.current.delete(fingerprint);
       setNotice(
         `已記錄 ${saved.student_name}：${saved.kind === "positive" ? "加分" : "扣分"} ${saved.score}。未發放點數。`,
       );

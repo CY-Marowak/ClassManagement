@@ -111,10 +111,18 @@ test("teachers record scores including zero; retry is safe; students see only th
   );
   await page.getByRole("button", { name: "送出記分" }).click();
   await expect(page.getByRole("alert")).toBeVisible();
+  // Complete a different operation before retrying the unconfirmed one.
+  await page.getByLabel("分數", { exact: true }).fill("-1");
+  await page.getByLabel("補充原因（選填）").fill("另一筆課堂提醒");
   await page.getByRole("button", { name: "送出記分" }).click();
-  await expect(history).toContainText("共 4 筆");
+  await expect(history).toContainText("共 5 筆");
+  await page.getByLabel("分數", { exact: true }).fill("-5");
+  await page.getByLabel("補充原因（選填）").fill("提醒後仍干擾討論");
+  await page.getByRole("button", { name: "送出記分" }).click();
+  await expect(page.locator('.notice[role="status"]')).toContainText("扣分 -5");
+  await expect(history).toContainText("共 5 筆");
   await page.getByLabel("查看紀錄").selectOption(String(roster[0].id));
-  await expect(history.locator(".score-total")).toHaveText("累積分數 -2");
+  await expect(history.locator(".score-total")).toHaveText("累積分數 -3");
   await page.screenshot({ path: ".local/scores-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: ".local/scores-mobile.png", fullPage: true });
@@ -145,8 +153,8 @@ test("teachers record scores including zero; retry is safe; students see only th
   await student.getByLabel("確認新密碼").fill("Student!Scoring2026");
   await student.getByRole("button", { name: "儲存密碼並進入班級" }).click();
   const own = student.getByRole("region", { name: "我的分數", exact: true });
-  await expect(own.locator(".score-total")).toHaveText("累積分數 -2");
-  await expect(own.locator(".score-record")).toHaveCount(4);
+  await expect(own.locator(".score-total")).toHaveText("累積分數 -3");
+  await expect(own.locator(".score-record")).toHaveCount(5);
   await expect(own).toContainText("共同教師陳");
   await expect(own).toContainText("待補原因");
   await expect(own).not.toContainText("小美");
