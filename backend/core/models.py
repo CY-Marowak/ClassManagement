@@ -102,6 +102,7 @@ class TeacherAuditEvent(models.Model):
 
 
 class Student(models.Model):
+    behavior_score_total = models.BigIntegerField(default=0)
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE, related_name="students")
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student")
     seat_number = models.PositiveSmallIntegerField(
@@ -146,3 +147,41 @@ class StudentAuditEvent(models.Model):
     student_name = models.CharField(max_length=80)
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)
+
+
+class ScoreRecord(models.Model):
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+    request_id = models.UUIDField(default=uuid.uuid4)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="scores")
+    creator = models.ForeignKey(User, on_delete=models.PROTECT)
+    creator_name = models.CharField(max_length=80)
+    kind = models.CharField(max_length=8, choices=[("positive", "加分"), ("negative", "扣分")])
+    score = models.SmallIntegerField()
+    template = models.CharField(max_length=30)
+    reason = models.CharField(max_length=80)
+    note = models.CharField(max_length=1000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cohort", "creator", "request_id"], name="score_request_once"
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(kind="positive", score__gte=0, score__lte=100)
+                    | models.Q(kind="negative", score__gte=-100, score__lte=0)
+                ),
+                name="score_kind_range",
+            ),
+        ]
+
+
+class ScoreAuditEvent(models.Model):
+    record = models.ForeignKey(ScoreRecord, on_delete=models.CASCADE, related_name="events")
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    actor_name = models.CharField(max_length=80)
+    action = models.CharField(max_length=20, default="created")
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -29,6 +29,12 @@ export type Student = {
 export type StudentProfile = Student & { cohort: { id: number; name: string } };
 
 const fieldNames: Record<string, string> = {
+  score: "分數",
+  kind: "加扣分種類",
+  template: "原因模板",
+  note: "補充原因",
+  student_id: "學生",
+  request_id: "操作識別",
   email: "Email",
   password: "密碼",
   display_name: "顯示名稱",

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type StudentProfile, type StudentSession } from "./api";
 import { AnimalAvatar } from "./AnimalAvatar";
+import { ScoreHistory } from "./ScoreHistory";
 
 export function StudentAccess({
   changing = false,
@@ -188,6 +189,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             <h1>{profile.name}</h1>
             <p className="badge">座號 {profile.seat_number}</p>
             <p className="muted">這是你的固定動物夥伴，一起開始班級日常。</p>
+            <ScoreHistory endpoint="/student/scores/" />
           </>
         ) : (
           !error && <p role="status">正在載入你的班級…</p>

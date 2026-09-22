@@ -7,11 +7,16 @@ from core.memberships import (
     TeacherEventsView,
     TeachersView,
 )
+from core.scores import ScoreEventsView, ScoreRosterView, ScoresView, StudentScoresView
 from core.student_management import ResetStudentPasswordView, StudentDetailView, StudentEventsView
 from core.students import StudentLoginView, StudentMeView, StudentPasswordView, StudentsView
 from django.urls import path
 
 urlpatterns = [
+    path("api/classes/<int:pk>/score-roster/", ScoreRosterView.as_view()),
+    path("api/classes/<int:pk>/scores/", ScoresView.as_view()),
+    path("api/classes/<int:pk>/score-events/", ScoreEventsView.as_view()),
+    path("api/student/scores/", StudentScoresView.as_view()),
     path("api/teacher-applications/", TeacherApplicationsView.as_view()),
     path("api/classes/<int:pk>/teachers/", TeachersView.as_view()),
     path("api/classes/<int:pk>/teachers/<int:member_id>/", TeacherDecisionView.as_view()),

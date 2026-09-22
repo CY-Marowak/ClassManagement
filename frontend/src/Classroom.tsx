@@ -3,6 +3,7 @@ import { api, type Cohort, type Notice, type Teacher } from "./api";
 import { StudentRoster } from "./StudentRoster";
 import { TeacherApplications } from "./TeacherApplications";
 import { TeacherManagement } from "./TeacherManagement";
+import { ScoreWorkspace } from "./ScoreWorkspace";
 
 function ClassForm({
   cohort,
@@ -226,6 +227,7 @@ export function Classroom({
   const [classes, setClasses] = useState<Cohort[]>([]);
   const [roster, setRoster] = useState<Cohort | null>(null);
   const [teachers, setTeachers] = useState<Cohort | null>(null);
+  const [scores, setScores] = useState<Cohort | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Cohort | "new" | null>(null);
   const [deleting, setDeleting] = useState<Cohort | null>(null);
@@ -264,6 +266,7 @@ export function Classroom({
             onClick={() => {
               setRoster(null);
               setTeachers(null);
+              setScores(null);
             }}
           >
             ▦ <span>我的班級</span>
@@ -290,7 +293,13 @@ export function Classroom({
         </div>
       </aside>
       <main className="workspace-main">
-        {teachers ? (
+        {scores ? (
+          <ScoreWorkspace
+            key={scores.id}
+            cohort={scores}
+            onBack={() => setScores(null)}
+          />
+        ) : teachers ? (
           <TeacherManagement
             key={teachers.id}
             cohort={teachers}
@@ -436,6 +445,12 @@ export function Classroom({
                       </span>
                     </div>
                     <h2>{c.name}</h2>
+                    <button
+                      className="primary full"
+                      onClick={() => setScores(c)}
+                    >
+                      記分與紀錄
+                    </button>
                     <p className="muted">
                       {c.entry_year} 年入學 · 同一屆，一起成長
                     </p>

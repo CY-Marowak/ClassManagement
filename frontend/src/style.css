@@ -816,6 +816,84 @@ small {
   text-align: center;
   color: #9ba391;
 }
+.score-form {
+  max-width: 640px;
+}
+.score-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.score-form label,
+.score-filter {
+  display: block;
+  margin-bottom: 18px;
+}
+.score-form select,
+.score-filter select {
+  width: 100%;
+}
+.score-form textarea {
+  resize: vertical;
+}
+.score-filter {
+  max-width: 640px;
+  margin-top: 28px;
+}
+.score-history {
+  text-align: left;
+  margin-top: 26px;
+  min-width: 0;
+}
+.score-history .page-title {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.score-history h2 {
+  font-size: 22px;
+}
+.score-total {
+  padding: 20px;
+  background: #eef3e8;
+  border-radius: 14px;
+}
+.score-total strong {
+  font-size: 32px;
+  margin-left: 16px;
+}
+.score-list {
+  list-style: none;
+  margin: 18px 0;
+  padding: 0;
+}
+.score-record {
+  padding: 20px 0;
+  border-bottom: 1px solid #e3e8dd;
+  overflow-wrap: anywhere;
+}
+.score-record p {
+  margin: 8px 0;
+}
+.score-record-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.score-record-top strong {
+  color: #435a34;
+}
+.score-record .badge {
+  margin-left: 10px;
+}
+.score-note {
+  white-space: pre-wrap;
+}
+.student-home:has(.score-history) {
+  max-width: 700px;
+  width: 100%;
+}
 @media (max-width: 800px) {
   .auth-layout {
     grid-template-columns: 1fr;
