@@ -449,7 +449,7 @@ export function Classroom({
                       className="primary full"
                       onClick={() => setScores(c)}
                     >
-                      記分與紀錄
+                      記分
                     </button>
                     <p className="muted">
                       {c.entry_year} 年入學 · 同一屆，一起成長

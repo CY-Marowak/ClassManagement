@@ -63,7 +63,12 @@ test("teachers record scores including zero; retry is safe; students see only th
     revision: 1,
   });
   await co.reload();
-  await co.getByRole("button", { name: "記分與紀錄", exact: true }).click();
+  await co.getByRole("button", { name: "記分", exact: true }).click();
+  await expect(co.getByRole("heading", { name: "新增一筆記分" })).toBeVisible();
+  await expect(co.getByLabel("查看紀錄")).toHaveCount(0);
+  await expect(
+    co.getByRole("region", { name: "分數紀錄", exact: true }),
+  ).toHaveCount(0);
   await co
     .getByLabel("記分學生", { exact: true })
     .selectOption(String(roster[0].id));
@@ -73,12 +78,17 @@ test("teachers record scores including zero; retry is safe; students see only th
   await expect(co.locator('.notice[role="status"]')).toContainText(
     "未發放點數",
   );
+  await co.getByRole("button", { name: "查看分數紀錄 →" }).click();
+  await expect(
+    co.getByRole("heading", { name: "分數紀錄", exact: true }),
+  ).toBeVisible();
+  await expect(co.getByRole("button", { name: "送出記分" })).toHaveCount(0);
   await expect(
     co.getByRole("region", { name: "分數紀錄", exact: true }),
   ).toContainText("加分 +3");
 
   await page.reload();
-  await page.getByRole("button", { name: "記分與紀錄", exact: true }).click();
+  await page.getByRole("button", { name: "記分", exact: true }).click();
   await page
     .getByLabel("記分學生", { exact: true })
     .selectOption(String(roster[0].id));
@@ -86,13 +96,17 @@ test("teachers record scores including zero; retry is safe; students see only th
   await page.getByLabel("原因模板").selectOption("other");
   await page.getByLabel("分數", { exact: true }).fill("0");
   await page.getByRole("button", { name: "送出記分" }).click();
+  await expect(page.locator('.notice[role="status"]')).toContainText("扣分 0");
+  await page.getByRole("button", { name: "查看分數紀錄 →" }).click();
   const history = page.getByRole("region", { name: "分數紀錄", exact: true });
   await expect(history).toContainText("扣分 0");
   await expect(history).toContainText("待補原因");
+  await expect(page.getByLabel("記分學生", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "← 返回記分" }).click();
   await page.getByLabel("加扣分種類").selectOption("positive");
   await page.getByLabel("分數", { exact: true }).fill("0");
   await page.getByRole("button", { name: "送出記分" }).click();
-  await expect(history).toContainText("加分 0");
+  await expect(page.locator('.notice[role="status"]')).toContainText("加分 0");
 
   await page.getByLabel("加扣分種類").selectOption("negative");
   await page.getByLabel("分數", { exact: true }).fill("-5");
@@ -115,11 +129,16 @@ test("teachers record scores including zero; retry is safe; students see only th
   await page.getByLabel("分數", { exact: true }).fill("-1");
   await page.getByLabel("補充原因（選填）").fill("另一筆課堂提醒");
   await page.getByRole("button", { name: "送出記分" }).click();
+  await expect(page.locator('.notice[role="status"]')).toContainText("扣分 -1");
+  await page.getByRole("button", { name: "查看分數紀錄 →" }).click();
   await expect(history).toContainText("共 5 筆");
+  await expect(history).toContainText("加分 0");
+  await page.getByRole("button", { name: "← 返回記分" }).click();
   await page.getByLabel("分數", { exact: true }).fill("-5");
   await page.getByLabel("補充原因（選填）").fill("提醒後仍干擾討論");
   await page.getByRole("button", { name: "送出記分" }).click();
   await expect(page.locator('.notice[role="status"]')).toContainText("扣分 -5");
+  await page.getByRole("button", { name: "查看分數紀錄 →" }).click();
   await expect(history).toContainText("共 5 筆");
   await page.getByLabel("查看紀錄").selectOption(String(roster[0].id));
   await expect(history.locator(".score-total")).toHaveText("累積分數 -3");
@@ -132,6 +151,33 @@ test("teachers record scores including zero; retry is safe; students see only th
     ),
   ).toBe(true);
 
+  await page.getByRole("button", { name: "← 返回記分" }).click();
+  await page.getByLabel("補充原因（選填）").fill("尚未送出的草稿");
+  await page.getByRole("button", { name: "查看分數紀錄 →" }).click();
+  await expect(history.locator(".score-total")).toHaveText("累積分數 -3");
+  await page.getByRole("button", { name: "← 返回記分" }).click();
+  await expect(page.getByLabel("補充原因（選填）")).toHaveValue(
+    "尚未送出的草稿",
+  );
+  await expect(page.getByLabel("記分學生", { exact: true })).toHaveValue(
+    String(roster[0].id),
+  );
+  await expect(history).toHaveCount(0);
+  await expect(page.getByLabel("查看紀錄")).toHaveCount(0);
+  await page.screenshot({
+    path: ".local/score-entry-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.screenshot({
+    path: ".local/score-entry-desktop.png",
+    fullPage: true,
+  });
   await page
     .getByLabel("記分學生", { exact: true })
     .selectOption(String(roster[1].id));
@@ -172,7 +218,12 @@ test("teachers record scores including zero; retry is safe; students see only th
     action: "remove",
     revision: 2,
   });
-  await co.getByRole("button", { name: "重新整理名單與紀錄" }).click();
+  await co.getByRole("button", { name: "重新整理紀錄" }).click();
+  await expect(co.getByRole("alert")).toBeVisible();
+  await expect(
+    co.getByRole("region", { name: "分數紀錄", exact: true }),
+  ).toHaveCount(0);
+  await co.getByRole("button", { name: "← 返回記分" }).click();
   await expect(co.getByRole("alert")).toBeVisible();
   await expect(co.getByRole("button", { name: "送出記分" })).toHaveCount(0);
   await coContext.close();

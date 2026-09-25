@@ -22,6 +22,7 @@ export function ScoreWorkspace({
   const [template, setTemplate] = useState("participation");
   const [note, setNote] = useState("");
   const [filter, setFilter] = useState("");
+  const [view, setView] = useState<"entry" | "history">("entry");
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -99,10 +100,24 @@ export function ScoreWorkspace({
       </button>
       <header>
         <p className="eyebrow">{cohort.name} / 教學紀錄</p>
-        <h1>記分與紀錄</h1>
+        <h1>{view === "entry" ? "記分" : "分數紀錄"}</h1>
         <p className="muted">
-          記錄每一次表現。這裡只調整分數，獎勵點數另行發放。
+          {view === "entry"
+            ? "記錄每一次表現。這裡只調整分數，獎勵點數另行發放。"
+            : "查看全班紀錄，或選擇學生查看個人總分與明細。"}
         </p>
+        <button
+          className="secondary"
+          disabled={busy}
+          onClick={() => {
+            setView(view === "entry" ? "history" : "entry");
+            setNotice("");
+            setError("");
+            setRevision((x) => x + 1);
+          }}
+        >
+          {view === "entry" ? "查看分數紀錄 →" : "← 返回記分"}
+        </button>
       </header>
       {error && (
         <p className="error" role="alert">
@@ -122,129 +137,134 @@ export function ScoreWorkspace({
           setRevision((x) => x + 1);
         }}
       >
-        重新整理名單與紀錄
+        {view === "entry" ? "重新整理名單" : "重新整理紀錄"}
       </button>
       {loading ? (
         <p role="status">正在載入名單…</p>
       ) : (
         roster && (
           <>
-            {roster.students.length ? (
-              <section className="editor" aria-label="單筆記分">
-                <form onSubmit={submit} className="score-form">
-                  <h2>新增一筆記分</h2>
-                  <fieldset disabled={busy}>
-                    <label>
-                      記分學生
-                      <select
-                        aria-label="記分學生"
-                        value={studentId}
-                        required
-                        onChange={(e) => setStudentId(e.target.value)}
-                      >
-                        <option value="">選擇學生（依座號）</option>
-                        {roster.students.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.seat_number} 號 · {s.name}（總分 {s.total}）
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <div className="form-row">
+            {view === "entry" ? (
+              roster.students.length ? (
+                <section className="editor" aria-label="單筆記分">
+                  <form onSubmit={submit} className="score-form">
+                    <h2>新增一筆記分</h2>
+                    <fieldset disabled={busy}>
                       <label>
-                        加扣分種類
+                        記分學生
                         <select
-                          value={kind}
-                          onChange={(e) => {
-                            const next = e.target.value as Kind;
-                            setKind(next);
-                            setScore(next === "positive" ? "1" : "-1");
-                            setTemplate(
-                              next === "positive"
-                                ? "participation"
-                                : "disruption",
-                            );
-                          }}
+                          aria-label="記分學生"
+                          value={studentId}
+                          required
+                          onChange={(e) => setStudentId(e.target.value)}
                         >
-                          <option value="positive">加分</option>
-                          <option value="negative">扣分</option>
+                          <option value="">選擇學生（依座號）</option>
+                          {roster.students.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.seat_number} 號 · {s.name}（總分 {s.total}）
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="form-row">
+                        <label>
+                          加扣分種類
+                          <select
+                            value={kind}
+                            onChange={(e) => {
+                              const next = e.target.value as Kind;
+                              setKind(next);
+                              setScore(next === "positive" ? "1" : "-1");
+                              setTemplate(
+                                next === "positive"
+                                  ? "participation"
+                                  : "disruption",
+                              );
+                            }}
+                          >
+                            <option value="positive">加分</option>
+                            <option value="negative">扣分</option>
+                          </select>
+                        </label>
+                        <label>
+                          分數
+                          <input
+                            type="number"
+                            value={score}
+                            min={kind === "positive" ? 0 : -100}
+                            max={kind === "positive" ? 100 : 0}
+                            step={1}
+                            required
+                            onChange={(e) => setScore(e.target.value)}
+                          />
+                        </label>
+                      </div>
+                      <p className="muted small">
+                        {kind === "positive" ? "加分 0～100" : "扣分 −100～0"}
+                        ，只接受整數；0 分也會留下紀錄。
+                      </p>
+                      <label>
+                        原因模板
+                        <select
+                          value={template}
+                          onChange={(e) => setTemplate(e.target.value)}
+                        >
+                          {Object.entries(roster.templates[kind]).map(
+                            ([id, label]) => (
+                              <option key={id} value={id}>
+                                {label}
+                              </option>
+                            ),
+                          )}
+                          <option value="other">其他</option>
                         </select>
                       </label>
                       <label>
-                        分數
-                        <input
-                          type="number"
-                          value={score}
-                          min={kind === "positive" ? 0 : -100}
-                          max={kind === "positive" ? 100 : 0}
-                          step={1}
-                          required
-                          onChange={(e) => setScore(e.target.value)}
+                        補充原因（選填）
+                        <textarea
+                          value={note}
+                          maxLength={1000}
+                          rows={3}
+                          onChange={(e) => setNote(e.target.value)}
                         />
                       </label>
-                    </div>
-                    <p className="muted small">
-                      {kind === "positive" ? "加分 0～100" : "扣分 −100～0"}
-                      ，只接受整數；0 分也會留下紀錄。
-                    </p>
-                    <label>
-                      原因模板
-                      <select
-                        value={template}
-                        onChange={(e) => setTemplate(e.target.value)}
-                      >
-                        {Object.entries(roster.templates[kind]).map(
-                          ([id, label]) => (
-                            <option key={id} value={id}>
-                              {label}
-                            </option>
-                          ),
-                        )}
-                        <option value="other">其他</option>
-                      </select>
-                    </label>
-                    <label>
-                      補充原因（選填）
-                      <textarea
-                        value={note}
-                        maxLength={1000}
-                        rows={3}
-                        onChange={(e) => setNote(e.target.value)}
-                      />
-                    </label>
-                    {template === "other" && !note.trim() && (
-                      <p className="muted small">
-                        未填寫原因，這筆會標記「待補原因」，仍可送出。
-                      </p>
-                    )}
-                    <button className="primary" disabled={busy || !studentId}>
-                      {busy ? "記錄中…" : "送出記分"}
-                    </button>
-                  </fieldset>
-                </form>
-              </section>
+                      {template === "other" && !note.trim() && (
+                        <p className="muted small">
+                          未填寫原因，這筆會標記「待補原因」，仍可送出。
+                        </p>
+                      )}
+                      <button className="primary" disabled={busy || !studentId}>
+                        {busy ? "記錄中…" : "送出記分"}
+                      </button>
+                    </fieldset>
+                  </form>
+                </section>
+              ) : (
+                <p className="notice">班級目前沒有學生，請由導師先加入學生。</p>
+              )
             ) : (
-              <p className="notice">班級目前沒有學生，請由導師先加入學生。</p>
+              <>
+                <label className="score-filter">
+                  查看紀錄
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                  >
+                    <option value="">全班學生</option>
+                    {roster.students.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.seat_number} 號 · {s.name}（總分 {s.total}）
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <ScoreHistory
+                  key={`${filter}-${revision}`}
+                  teacher
+                  endpoint={`${base}scores/${filter ? `?student_id=${filter}` : ""}`}
+                />
+              </>
             )}
-            <label className="score-filter">
-              查看紀錄
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="">全班學生</option>
-                {roster.students.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.seat_number} 號 · {s.name}（總分 {s.total}）
-                  </option>
-                ))}
-              </select>
-            </label>
-            <ScoreHistory
-              key={`${filter}-${revision}`}
-              teacher
-              endpoint={`${base}scores/${filter ? `?student_id=${filter}` : ""}`}
-            />
           </>
         )
       )}
