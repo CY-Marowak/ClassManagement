@@ -1,4 +1,5 @@
 from core import views
+from core.batch_scores import PendingReasonsView, ScoreBatchesView
 from core.cohorts import ClassDetailView, ClassesView
 from core.memberships import (
     TeacherApplicationsView,
@@ -13,6 +14,8 @@ from core.students import StudentLoginView, StudentMeView, StudentPasswordView, 
 from django.urls import path
 
 urlpatterns = [
+    path("api/classes/<int:pk>/pending-reasons/", PendingReasonsView.as_view()),
+    path("api/classes/<int:pk>/score-batches/", ScoreBatchesView.as_view()),
     path("api/classes/<int:pk>/score-roster/", ScoreRosterView.as_view()),
     path("api/classes/<int:pk>/scores/", ScoresView.as_view()),
     path("api/classes/<int:pk>/score-events/", ScoreEventsView.as_view()),

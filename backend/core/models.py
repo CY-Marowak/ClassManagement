@@ -150,6 +150,8 @@ class StudentAuditEvent(models.Model):
 
 
 class ScoreRecord(models.Model):
+    batch_id = models.UUIDField(null=True, blank=True, db_index=True)
+    request_fingerprint = models.CharField(max_length=64, blank=True)
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
     request_id = models.UUIDField(default=uuid.uuid4)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="scores")
@@ -165,7 +167,8 @@ class ScoreRecord(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["cohort", "creator", "request_id"], name="score_request_once"
+                fields=["cohort", "creator", "request_id", "student"],
+                name="score_student_request_once",
             ),
             models.CheckConstraint(
                 condition=(
@@ -178,6 +181,8 @@ class ScoreRecord(models.Model):
 
 
 class ScoreAuditEvent(models.Model):
+    request_id = models.UUIDField(null=True, blank=True)
+    request_fingerprint = models.CharField(max_length=64, blank=True)
     record = models.ForeignKey(ScoreRecord, on_delete=models.CASCADE, related_name="events")
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     actor_name = models.CharField(max_length=80)

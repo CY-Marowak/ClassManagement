@@ -980,3 +980,50 @@ small {
     white-space: nowrap;
   }
 }
+/* Compact multi-selection inside the existing scoring form. */
+.batch-students {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  margin: 1rem 0;
+}
+.score-form label.check-row,
+.check-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #dce4d6;
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+.check-row input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  margin: 0;
+}
+.pending-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.pending-record span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pending-reasons fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.pending-reasons {
+  max-width: 900px;
+}
+.pending-reasons textarea {
+  margin-top: 0.5rem;
+}

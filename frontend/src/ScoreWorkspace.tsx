@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { api, type Cohort } from "./api";
+import { api, ApiError, type Cohort } from "./api";
 import { ScoreHistory, type ScoreRecord } from "./ScoreHistory";
+import { PendingReasons } from "./PendingReasons";
 
 type Kind = "positive" | "negative";
 type ScoreRoster = {
@@ -17,12 +18,14 @@ export function ScoreWorkspace({
 }) {
   const [roster, setRoster] = useState<ScoreRoster | null>(null);
   const [studentId, setStudentId] = useState("");
+  const [mode, setMode] = useState<"single" | "batch">("single");
+  const [selected, setSelected] = useState<number[]>([]);
   const [kind, setKind] = useState<Kind>("positive");
   const [score, setScore] = useState("1");
   const [template, setTemplate] = useState("participation");
   const [note, setNote] = useState("");
   const [filter, setFilter] = useState("");
-  const [view, setView] = useState<"entry" | "history">("entry");
+  const [view, setView] = useState<"entry" | "history" | "pending">("entry");
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -61,7 +64,9 @@ export function ScoreWorkspace({
       return;
     }
     const payload = {
-      student_id: Number(studentId),
+      ...(mode === "batch"
+        ? { student_ids: [...selected].sort((a, b) => a - b) }
+        : { student_id: Number(studentId) }),
       kind,
       score: value,
       template,
@@ -75,18 +80,38 @@ export function ScoreWorkspace({
     setError("");
     setNotice("");
     try {
-      const saved = await api<ScoreRecord>(base + "scores/", "POST", {
-        ...payload,
-        request_id: requestId,
-      });
+      const saved = await api<ScoreRecord | { results: ScoreRecord[] }>(
+        base + (mode === "batch" ? "score-batches/" : "scores/"),
+        "POST",
+        {
+          ...payload,
+          request_id: requestId,
+        },
+      );
       requests.current.delete(fingerprint);
       setNotice(
-        `已記錄 ${saved.student_name}：${saved.kind === "positive" ? "加分" : "扣分"} ${saved.score}。未發放點數。`,
+        "results" in saved
+          ? `已記錄 ${saved.results.length} 位學生，每人 ${kind === "positive" ? "加分" : "扣分"} ${value}。未發放點數。`
+          : `已記錄 ${saved.student_name}：${saved.kind === "positive" ? "加分" : "扣分"} ${saved.score}。未發放點數。`,
       );
       setNote("");
       setRevision((x) => x + 1);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "記分失敗，請重試。");
+      const unavailable =
+        e instanceof ApiError
+          ? e.unavailableIds
+              .map((id) => {
+                const student = roster?.students.find((s) => s.id === id);
+                return student
+                  ? `${student.seat_number} 號 ${student.name}`
+                  : "已不在名單中的學生";
+              })
+              .join("、")
+          : "";
+      setError(
+        (e instanceof Error ? e.message : "記分失敗，請重試。") +
+          (unavailable ? `（${unavailable}）` : ""),
+      );
     } finally {
       submitting.current = false;
       setBusy(false);
@@ -100,23 +125,37 @@ export function ScoreWorkspace({
       </button>
       <header>
         <p className="eyebrow">{cohort.name} / 教學紀錄</p>
-        <h1>{view === "entry" ? "記分" : "分數紀錄"}</h1>
+        <h1>
+          {view === "entry"
+            ? "記分"
+            : view === "pending"
+              ? "待補原因"
+              : "分數紀錄"}
+        </h1>
         <p className="muted">
           {view === "entry"
             ? "記錄每一次表現。這裡只調整分數，獎勵點數另行發放。"
-            : "查看全班紀錄，或選擇學生查看個人總分與明細。"}
+            : view === "pending"
+              ? "選取待補紀錄，填入相同原因。分數與建立教師保持不變。"
+              : "查看全班紀錄，或選擇學生查看個人總分與明細。"}
         </p>
         <button
           className="secondary"
           disabled={busy}
           onClick={() => {
-            setView(view === "entry" ? "history" : "entry");
+            setView(
+              view === "entry" || view === "pending" ? "history" : "entry",
+            );
             setNotice("");
             setError("");
             setRevision((x) => x + 1);
           }}
         >
-          {view === "entry" ? "查看分數紀錄 →" : "← 返回記分"}
+          {view === "entry"
+            ? "查看分數紀錄 →"
+            : view === "pending"
+              ? "← 返回分數紀錄"
+              : "← 返回記分"}
         </button>
       </header>
       {error && (
@@ -129,17 +168,24 @@ export function ScoreWorkspace({
           {notice}
         </p>
       )}
-      <button
-        className="text-button"
-        disabled={busy || loading}
-        onClick={() => {
-          setError("");
-          setRevision((x) => x + 1);
-        }}
-      >
-        {view === "entry" ? "重新整理名單" : "重新整理紀錄"}
-      </button>
-      {loading ? (
+      {view !== "pending" && (
+        <button
+          className="text-button"
+          disabled={busy || loading}
+          onClick={() => {
+            setError("");
+            setRevision((x) => x + 1);
+          }}
+        >
+          {view === "entry" ? "重新整理名單" : "重新整理紀錄"}
+        </button>
+      )}
+      <PendingReasons
+        base={base}
+        active={view === "pending"}
+        onBusy={setBusy}
+      />
+      {view === "pending" ? null : loading ? (
         <p role="status">正在載入名單…</p>
       ) : (
         roster && (
@@ -148,24 +194,88 @@ export function ScoreWorkspace({
               roster.students.length ? (
                 <section className="editor" aria-label="單筆記分">
                   <form onSubmit={submit} className="score-form">
-                    <h2>新增一筆記分</h2>
+                    <h2>{mode === "single" ? "新增一筆記分" : "批次記分"}</h2>
                     <fieldset disabled={busy}>
                       <label>
-                        記分學生
+                        記分模式
                         <select
-                          aria-label="記分學生"
-                          value={studentId}
-                          required
-                          onChange={(e) => setStudentId(e.target.value)}
+                          value={mode}
+                          onChange={(e) =>
+                            setMode(e.target.value as "single" | "batch")
+                          }
                         >
-                          <option value="">選擇學生（依座號）</option>
-                          {roster.students.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.seat_number} 號 · {s.name}（總分 {s.total}）
-                            </option>
-                          ))}
+                          <option value="single">單筆記分</option>
+                          <option value="batch">批次記分</option>
                         </select>
                       </label>
+                      {mode === "batch" ? (
+                        <div>
+                          <div className="actions">
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() =>
+                                setSelected(roster.students.map((s) => s.id))
+                              }
+                            >
+                              全選學生
+                            </button>
+                            <button
+                              type="button"
+                              className="text-button"
+                              onClick={() => setSelected([])}
+                            >
+                              清除選取
+                            </button>
+                          </div>
+                          <p className="muted">已選 {selected.length} 位學生</p>
+                          <div className="batch-students">
+                            {roster.students.map((s) => (
+                              <label className="check-row" key={s.id}>
+                                <input
+                                  type="checkbox"
+                                  checked={selected.includes(s.id)}
+                                  onChange={(e) =>
+                                    setSelected((ids) =>
+                                      e.target.checked
+                                        ? [...ids, s.id]
+                                        : ids.filter((id) => id !== s.id),
+                                    )
+                                  }
+                                />
+                                {s.seat_number} 號 · {s.name}（總分 {s.total}）
+                              </label>
+                            ))}
+                          </div>
+                          {selected.some(
+                            (id) => !roster.students.some((s) => s.id === id),
+                          ) && (
+                            <p className="error">
+                              部分已選學生已不在名單，請清除選取後重新選擇。
+                            </p>
+                          )}
+                          <p className="muted small">
+                            以下分數與原因會套用到每位已選學生；任何一位無法記分時，整批都不儲存。
+                          </p>
+                        </div>
+                      ) : (
+                        <label>
+                          記分學生
+                          <select
+                            aria-label="記分學生"
+                            value={studentId}
+                            required
+                            onChange={(e) => setStudentId(e.target.value)}
+                          >
+                            <option value="">選擇學生（依座號）</option>
+                            {roster.students.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.seat_number} 號 · {s.name}（總分 {s.total}）
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
                       <div className="form-row">
                         <label>
                           加扣分種類
@@ -233,8 +343,20 @@ export function ScoreWorkspace({
                           未填寫原因，這筆會標記「待補原因」，仍可送出。
                         </p>
                       )}
-                      <button className="primary" disabled={busy || !studentId}>
-                        {busy ? "記錄中…" : "送出記分"}
+                      <button
+                        className="primary"
+                        disabled={
+                          busy ||
+                          (mode === "batch"
+                            ? selected.length === 0
+                            : !studentId)
+                        }
+                      >
+                        {busy
+                          ? "記錄中…"
+                          : mode === "batch"
+                            ? "送出批次記分"
+                            : "送出記分"}
                       </button>
                     </fieldset>
                   </form>
@@ -244,6 +366,16 @@ export function ScoreWorkspace({
               )
             ) : (
               <>
+                <button
+                  className="secondary"
+                  onClick={() => {
+                    setView("pending");
+                    setNotice("");
+                    setError("");
+                  }}
+                >
+                  整理待補原因
+                </button>
                 <label className="score-filter">
                   查看紀錄
                   <select

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api";
 
 export type ScoreRecord = {
+  batch_id: string | null;
   id: number;
   student_id: number;
   student_name: string;
@@ -14,7 +15,7 @@ export type ScoreRecord = {
   needs_reason: boolean;
   created_at: string;
 };
-type ScorePage = {
+export type ScorePage = {
   count: number;
   next: string | null;
   previous: string | null;
@@ -115,6 +116,11 @@ export function ScoreHistory({
                       )}
                     </p>
                     {record.note && <p className="score-note">{record.note}</p>}
+                    {teacher && record.batch_id && (
+                      <p className="muted small">
+                        同批記分 · {record.batch_id.slice(0, 8)}
+                      </p>
+                    )}
                     <p className="muted small">
                       {record.creator_name} ·{" "}
                       <time dateTime={record.created_at}>

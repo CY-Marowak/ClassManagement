@@ -4,6 +4,102 @@ import { resolve } from "node:path";
 
 test.use({ actionTimeout: 10000 });
 
+test("batch scoring and pending reasons stay separate and retry safely", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await teacher(page, `batch-${Date.now()}@example.com`, "批次導師");
+  const cohort = await post(page, "/classes/", {
+    name: "批次班",
+    entry_year: 2026,
+    current_grade: 1,
+  });
+  const base = `/classes/${cohort.id}/`;
+  await post(page, base + "students/", { text: "1\t小明\t001\n2\t小美\t002" });
+  await page.reload();
+  await page.getByRole("button", { name: "記分", exact: true }).click();
+  await page.getByLabel("記分模式").selectOption("batch");
+  await page.getByRole("button", { name: "全選學生", exact: true }).click();
+  await expect(page.getByText("已選 2 位學生", { exact: true })).toBeVisible();
+  await page.getByLabel("原因模板").selectOption("other");
+  await page.getByLabel("分數", { exact: true }).fill("2");
+  await page.route(
+    `**/api${base}score-batches/`,
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.status()).toBe(201);
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "送出批次記分" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await page.getByRole("button", { name: "送出批次記分" }).click();
+  await expect(page.locator('.notice[role="status"]')).toContainText(
+    "已記錄 2 位學生",
+  );
+  await expect(
+    page.getByRole("region", { name: "分數紀錄", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "查看分數紀錄 →" }).click();
+  const history = page.getByRole("region", { name: "分數紀錄", exact: true });
+  await expect(history).toContainText("共 2 筆");
+  await expect(history.getByText(/同批記分/)).toHaveCount(2);
+  await page.getByRole("button", { name: "整理待補原因" }).click();
+  await expect(
+    page.getByRole("heading", { name: "待補原因", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "全選本頁" }).click();
+  await page.getByLabel("統一補充原因").fill("共同協助整理教室");
+  await page.screenshot({
+    path: ".local/06-pending-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: ".local/06-pending-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.route(
+    `**/api${base}pending-reasons/`,
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "儲存原因" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await page.getByRole("button", { name: "儲存原因" }).click();
+  await expect(page.getByRole("status")).toContainText("已補齊 2 筆原因");
+  await expect(page.getByText("目前沒有可補的原因。")).toBeVisible();
+  await page.getByRole("button", { name: "← 返回分數紀錄" }).click();
+  await expect(
+    history.getByText("共同協助整理教室", { exact: true }),
+  ).toHaveCount(2);
+  await expect(history.getByText("待補原因", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "← 返回記分" }).click();
+  await expect(page.getByLabel("記分模式")).toHaveValue("batch");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: ".local/06-batch-mobile.png", fullPage: true });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.screenshot({
+    path: ".local/06-batch-desktop.png",
+    fullPage: true,
+  });
+});
+
 async function post(page: Page, path: string, data: unknown) {
   const { csrfToken } = await (await page.request.get("/api/csrf/")).json();
   const response = await page.request.post(`/api${path}`, {

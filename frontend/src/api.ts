@@ -29,6 +29,8 @@ export type Student = {
 export type StudentProfile = Student & { cohort: { id: number; name: string } };
 
 const fieldNames: Record<string, string> = {
+  student_ids: "學生",
+  record_ids: "紀錄",
   score: "分數",
   kind: "加扣分種類",
   template: "原因模板",
@@ -50,6 +52,15 @@ const fieldNames: Record<string, string> = {
   student_number: "學號",
   text: "名單",
 };
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public unavailableIds: number[] = [],
+  ) {
+    super(message);
+  }
+}
 
 export async function api<T>(
   path: string,
@@ -82,7 +93,7 @@ export async function api<T>(
             `${fieldNames[key] || key}：${Array.isArray(value) ? value.join(" ") : value}`,
         )
         .join("；");
-    throw new Error(message);
+    throw new ApiError(message, (data.unavailable_ids || []).map(Number));
   }
   return data as T;
 }

@@ -23,6 +23,7 @@ def require_teacher(user, cohort_id, homeroom=False):
 
 def record_data(record):
     return {
+        "batch_id": str(record.batch_id) if record.batch_id else None,
         "id": record.pk,
         "student_id": record.student_id,
         "student_name": record.student.user.display_name,
@@ -61,9 +62,8 @@ class WholeNumberField(serializers.IntegerField):
         return super().to_internal_value(data)
 
 
-class CreateScoreSerializer(serializers.Serializer):
+class ScoreValuesSerializer(serializers.Serializer):
     request_id = serializers.UUIDField()
-    student_id = serializers.IntegerField(min_value=1)
     kind = serializers.ChoiceField(choices=["positive", "negative"])
     score = WholeNumberField(min_value=-100, max_value=100)
     template = serializers.CharField(max_length=30)
@@ -83,6 +83,36 @@ class CreateScoreSerializer(serializers.Serializer):
         ):
             raise serializers.ValidationError({"score": "加分為 0～100；扣分為 −100～0。"})
         return attrs
+
+
+class CreateScoreSerializer(ScoreValuesSerializer):
+    student_id = serializers.IntegerField(min_value=1)
+
+
+def create_score_with_audit(
+    user, cohort_id, student, values, batch_id=None, request_fingerprint=""
+):
+    record = ScoreRecord.objects.create(
+        cohort_id=cohort_id,
+        request_id=values["request_id"],
+        student=student,
+        creator=user,
+        creator_name=user.display_name,
+        kind=values["kind"],
+        score=values["score"],
+        template=values["template"],
+        reason=TEMPLATES[values["kind"]].get(values["template"], "其他"),
+        note=values["note"],
+        batch_id=batch_id,
+        request_fingerprint=request_fingerprint,
+    )
+    student.behavior_score_total += record.score
+    student.save(update_fields=["behavior_score_total"])
+    data = record_data(record)
+    ScoreAuditEvent.objects.create(
+        record=record, actor=user, actor_name=user.display_name, after=data
+    )
+    return data
 
 
 class ScoresView(APIView):
@@ -122,32 +152,16 @@ class ScoresView(APIView):
                 .first()
             )
             if existing:
-                if any(
-                    getattr(existing, field) != values[field]
+                original = existing.events.get(action="created").after
+                if existing.batch_id or any(
+                    original[field] != values[field]
                     for field in ("student_id", "kind", "score", "template", "note")
                 ):
                     raise serializers.ValidationError(
                         "這次操作已完成，請勿以相同識別送出不同內容。"
                     )
                 return Response(record_data(existing))
-            record = ScoreRecord.objects.create(
-                cohort_id=pk,
-                request_id=values["request_id"],
-                student=student,
-                creator=request.user,
-                creator_name=request.user.display_name,
-                kind=values["kind"],
-                score=values["score"],
-                template=values["template"],
-                reason=TEMPLATES[values["kind"]].get(values["template"], "其他"),
-                note=values["note"],
-            )
-            student.behavior_score_total += record.score
-            student.save(update_fields=["behavior_score_total"])
-            data = record_data(record)
-            ScoreAuditEvent.objects.create(
-                record=record, actor=request.user, actor_name=request.user.display_name, after=data
-            )
+            data = create_score_with_audit(request.user, pk, student, values)
         return Response(data, status=201)
 
 
