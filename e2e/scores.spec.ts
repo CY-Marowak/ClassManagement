@@ -290,45 +290,6 @@ test("teachers record scores including zero; retry is safe; students see only th
   const application = await post(co, "/teacher-applications/", {
     application_code: code,
   });
-  await co.getByRole("button", { name: "重新整理紀錄", exact: true }).click();
-  const coHistory = co.getByRole("region", { name: "分數紀錄", exact: true });
-  await expect(coHistory.locator(".score-record")).toHaveCount(6);
-  await expect(
-    coHistory.getByRole("button", { name: "修改這筆", exact: true }),
-  ).toHaveCount(1);
-  await expect(
-    coHistory.getByRole("button", { name: "刪除紀錄", exact: true }),
-  ).toHaveCount(1);
-  await expect(
-    co.getByRole("button", { name: "查看分數查核", exact: true }),
-  ).toHaveCount(0);
-  await coHistory
-    .getByRole("button", { name: "修改這筆", exact: true })
-    .click();
-  const coDialog = co.getByRole("dialog");
-  await expect(
-    coDialog.getByRole("heading", { name: "本次修改 1 筆" }),
-  ).toBeVisible();
-  await coDialog.getByLabel("補充原因（選填）").fill("補記分享過程");
-  await coDialog.getByRole("button", { name: "確認儲存修改" }).click();
-  await expect(coDialog).toHaveCount(0);
-  await student.getByRole("button", { name: "更新分數紀錄" }).click();
-  await expect(own.getByText("已修改", { exact: true })).toHaveCount(1);
-  await expect(own).toContainText("補記分享過程");
-  await expect(
-    own.getByRole("button", { name: "修改這筆", exact: true }),
-  ).toHaveCount(0);
-  await coHistory
-    .getByRole("button", { name: "刪除紀錄", exact: true })
-    .click();
-  await expect(
-    coDialog.getByRole("heading", { name: "本次刪除 1 筆" }),
-  ).toBeVisible();
-  await coDialog.getByRole("button", { name: "確認刪除紀錄" }).click();
-  await expect(coDialog).toHaveCount(0);
-  await student.getByRole("button", { name: "更新分數紀錄" }).click();
-  await expect(own.locator(".score-total")).toHaveText("累積分數 -6");
-  await expect(own.locator(".score-record")).toHaveCount(4);
   await post(page, base + `teachers/${application.id}/`, {
     action: "approve",
     revision: 1,
@@ -485,6 +446,45 @@ test("teachers record scores including zero; retry is safe; students see only th
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await co.getByRole("button", { name: "重新整理紀錄", exact: true }).click();
+  const coHistory = co.getByRole("region", { name: "分數紀錄", exact: true });
+  await expect(coHistory.locator(".score-record")).toHaveCount(6);
+  await expect(
+    coHistory.getByRole("button", { name: "修改這筆", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    coHistory.getByRole("button", { name: "刪除紀錄", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    co.getByRole("button", { name: "查看分數查核", exact: true }),
+  ).toHaveCount(0);
+  await coHistory
+    .getByRole("button", { name: "修改這筆", exact: true })
+    .click();
+  const coDialog = co.getByRole("dialog");
+  await expect(
+    coDialog.getByRole("heading", { name: "本次修改 1 筆" }),
+  ).toBeVisible();
+  await coDialog.getByLabel("補充原因（選填）").fill("補記分享過程");
+  await coDialog.getByRole("button", { name: "確認儲存修改" }).click();
+  await expect(coDialog).toHaveCount(0);
+  await student.getByRole("button", { name: "更新分數紀錄" }).click();
+  await expect(own.getByText("已修改", { exact: true })).toHaveCount(1);
+  await expect(own).toContainText("補記分享過程");
+  await expect(
+    own.getByRole("button", { name: "修改這筆", exact: true }),
+  ).toHaveCount(0);
+  await coHistory
+    .getByRole("button", { name: "刪除紀錄", exact: true })
+    .click();
+  await expect(
+    coDialog.getByRole("heading", { name: "本次刪除 1 筆" }),
+  ).toBeVisible();
+  await coDialog.getByRole("button", { name: "確認刪除紀錄" }).click();
+  await expect(coDialog).toHaveCount(0);
+  await student.getByRole("button", { name: "更新分數紀錄" }).click();
+  await expect(own.locator(".score-total")).toHaveText("累積分數 -6");
+  await expect(own.locator(".score-record")).toHaveCount(4);
   await post(page, base + `teachers/${application.id}/`, {
     action: "remove",
     revision: 2,
