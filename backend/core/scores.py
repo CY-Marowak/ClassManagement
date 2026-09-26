@@ -23,6 +23,9 @@ def require_teacher(user, cohort_id, homeroom=False):
 
 def record_data(record):
     return {
+        "revision": record.revision,
+        "is_modified": record.is_modified,
+        "deleted_at": record.deleted_at.isoformat() if record.deleted_at else None,
         "batch_id": str(record.batch_id) if record.batch_id else None,
         "id": record.pk,
         "student_id": record.student_id,
@@ -122,7 +125,7 @@ class ScoresView(APIView):
         with transaction.atomic():
             get_object_or_404(Cohort.objects.select_for_update(), pk=pk)
             require_teacher(request.user, pk)
-            records = ScoreRecord.objects.filter(cohort_id=pk)
+            records = ScoreRecord.objects.filter(cohort_id=pk, deleted_at__isnull=True)
             total = None
             if "student_id" in request.query_params:
                 selection = StudentSelectionSerializer(data=request.query_params)
@@ -173,7 +176,11 @@ class StudentScoresView(APIView):
         with transaction.atomic():
             get_object_or_404(Cohort.objects.select_for_update(), pk=candidate.cohort_id)
             student = get_object_or_404(Student, user=request.user)
-            return score_page(request, student.scores.all(), student.behavior_score_total)
+            return score_page(
+                request,
+                student.scores.filter(deleted_at__isnull=True),
+                student.behavior_score_total,
+            )
 
 
 class StudentSelectionSerializer(serializers.Serializer):
@@ -188,6 +195,7 @@ class ScoreRosterView(APIView):
         students = Student.objects.filter(cohort_id=pk).select_related("user")
         return Response(
             {
+                "teacher_id": request.user.pk,
                 "students": [
                     {
                         "id": s.pk,

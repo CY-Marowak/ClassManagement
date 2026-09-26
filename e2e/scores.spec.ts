@@ -4,6 +4,142 @@ import { resolve } from "node:path";
 
 test.use({ actionTimeout: 10000 });
 
+test("score edits preserve exceptions, delete safely, and show audit differences", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await teacher(page, `edit-${Date.now()}@example.com`, "修正導師");
+  const cohort = await post(page, "/classes/", {
+    name: "修正班",
+    entry_year: 2026,
+    current_grade: 1,
+  });
+  const base = `/classes/${cohort.id}/`;
+  await post(page, base + "students/", {
+    text: "1\t小明\t001\n2\t小美\t002\n3\t小華\t003",
+  });
+  const students = await (
+    await page.request.get(`/api${base}students/`)
+  ).json();
+  const batch = await post(page, base + "score-batches/", {
+    student_ids: students.map((s: { id: number }) => s.id),
+    kind: "positive",
+    score: 2,
+    template: "participation",
+    note: "全班合作",
+    request_id: crypto.randomUUID(),
+  });
+  await page.reload();
+  await page.getByRole("button", { name: "記分", exact: true }).click();
+  await page.getByRole("button", { name: "查看分數紀錄 →" }).click();
+  const record = (name: string) =>
+    page.locator(".score-record").filter({ hasText: name });
+  const dialog = page.getByRole("dialog");
+  await record("小明")
+    .getByRole("button", { name: "修改這筆", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("heading", { name: "本次修改 1 筆" }),
+  ).toBeVisible();
+  await dialog.getByLabel("分數", { exact: true }).fill("1");
+  await page.route(
+    `**/api${base}score-changes/`,
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  await dialog.getByRole("button", { name: "確認儲存修改" }).click();
+  await expect(dialog.getByRole("alert")).toBeVisible();
+  // Editing the draft and returning must keep the original request identity.
+  await dialog.getByLabel("分數", { exact: true }).fill("8");
+  await dialog.getByLabel("分數", { exact: true }).fill("1");
+  await dialog.getByRole("button", { name: "確認儲存修改" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(record("小明")).toContainText("加分 +1");
+  await expect(
+    record("小明").getByText("已修改", { exact: true }),
+  ).toBeVisible();
+  await record("小美")
+    .getByRole("button", { name: "刪除紀錄", exact: true })
+    .click();
+  await expect(dialog).toContainText("已發放點數不回收");
+  await dialog.getByRole("button", { name: "取消", exact: true }).click();
+  await expect(record("小美")).toHaveCount(1);
+  await record("小美")
+    .getByRole("button", { name: "刪除紀錄", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("heading", { name: "本次刪除 1 筆" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "確認刪除紀錄" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(record("小美")).toHaveCount(0);
+  await record("小華")
+    .getByRole("button", { name: "修改同批", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("heading", { name: "本次修改 1 筆" }),
+  ).toBeVisible();
+  await expect(dialog).toContainText("略過 2 筆");
+  await expect(dialog).toContainText("小明：已個別修改");
+  await expect(dialog).toContainText("小美：已刪除");
+  await dialog.getByLabel("分數", { exact: true }).fill("3");
+  await page.screenshot({ path: ".local/07-edit-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: ".local/07-edit-mobile.png", fullPage: true });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  // Simulate another tab saving after this preview. The stale confirmation must fail.
+  const anchor = batch.results.find(
+    (r: { student_name: string }) => r.student_name === "小華",
+  );
+  const preview = await (
+    await page.request.get(
+      `/api${base}scores/${anchor.id}/edit-preview/?scope=batch`,
+    )
+  ).json();
+  await post(page, base + "score-changes/", {
+    action: "edit",
+    preview_token: preview.token,
+    request_id: crypto.randomUUID(),
+    kind: "positive",
+    score: 4,
+    template: "helping",
+    note: "另頁已修正",
+  });
+  await dialog.getByRole("button", { name: "確認儲存修改" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("整批未儲存");
+  await dialog.getByRole("button", { name: "重新載入預覽" }).click();
+  await expect(dialog.getByLabel("分數", { exact: true })).toHaveValue("4");
+  await dialog.getByLabel("分數", { exact: true }).fill("3");
+  await dialog.getByRole("button", { name: "確認儲存修改" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(record("小華")).toContainText("加分 +3");
+  await expect(record("小明")).toContainText("加分 +1");
+  await page.getByRole("button", { name: "查看分數查核", exact: true }).click();
+  const audit = page.getByRole("region", { name: "分數查核", exact: true });
+  await expect(audit).toContainText("刪除記分");
+  await expect(audit).toContainText("4 → 3");
+  await expect(audit).toContainText("共 7 筆");
+  await page.screenshot({ path: ".local/07-audit-mobile.png", fullPage: true });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.screenshot({
+    path: ".local/07-audit-desktop.png",
+    fullPage: true,
+  });
+});
+
 test("batch scoring and pending reasons stay separate and retry safely", async ({
   page,
 }) => {
@@ -154,6 +290,45 @@ test("teachers record scores including zero; retry is safe; students see only th
   const application = await post(co, "/teacher-applications/", {
     application_code: code,
   });
+  await co.getByRole("button", { name: "重新整理紀錄", exact: true }).click();
+  const coHistory = co.getByRole("region", { name: "分數紀錄", exact: true });
+  await expect(coHistory.locator(".score-record")).toHaveCount(6);
+  await expect(
+    coHistory.getByRole("button", { name: "修改這筆", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    coHistory.getByRole("button", { name: "刪除紀錄", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    co.getByRole("button", { name: "查看分數查核", exact: true }),
+  ).toHaveCount(0);
+  await coHistory
+    .getByRole("button", { name: "修改這筆", exact: true })
+    .click();
+  const coDialog = co.getByRole("dialog");
+  await expect(
+    coDialog.getByRole("heading", { name: "本次修改 1 筆" }),
+  ).toBeVisible();
+  await coDialog.getByLabel("補充原因（選填）").fill("補記分享過程");
+  await coDialog.getByRole("button", { name: "確認儲存修改" }).click();
+  await expect(coDialog).toHaveCount(0);
+  await student.getByRole("button", { name: "更新分數紀錄" }).click();
+  await expect(own.getByText("已修改", { exact: true })).toHaveCount(1);
+  await expect(own).toContainText("補記分享過程");
+  await expect(
+    own.getByRole("button", { name: "修改這筆", exact: true }),
+  ).toHaveCount(0);
+  await coHistory
+    .getByRole("button", { name: "刪除紀錄", exact: true })
+    .click();
+  await expect(
+    coDialog.getByRole("heading", { name: "本次刪除 1 筆" }),
+  ).toBeVisible();
+  await coDialog.getByRole("button", { name: "確認刪除紀錄" }).click();
+  await expect(coDialog).toHaveCount(0);
+  await student.getByRole("button", { name: "更新分數紀錄" }).click();
+  await expect(own.locator(".score-total")).toHaveText("累積分數 -6");
+  await expect(own.locator(".score-record")).toHaveCount(4);
   await post(page, base + `teachers/${application.id}/`, {
     action: "approve",
     revision: 1,

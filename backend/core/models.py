@@ -150,6 +150,10 @@ class StudentAuditEvent(models.Model):
 
 
 class ScoreRecord(models.Model):
+    revision = models.PositiveIntegerField(default=1)
+    is_modified = models.BooleanField(default=False)
+    individually_modified = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     batch_id = models.UUIDField(null=True, blank=True, db_index=True)
     request_fingerprint = models.CharField(max_length=64, blank=True)
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)

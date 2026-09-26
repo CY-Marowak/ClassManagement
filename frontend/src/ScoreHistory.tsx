@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
+import { ScoreChangeDialog, type ScoreManagement } from "./ScoreChangeDialog";
 
 export type ScoreRecord = {
+  creator_id: number;
+  template: string;
+  is_modified: boolean;
+  revision: number;
+  deleted_at: string | null;
   batch_id: string | null;
   id: number;
   student_id: number;
@@ -26,10 +32,16 @@ export type ScorePage = {
 export function ScoreHistory({
   endpoint,
   teacher = false,
+  management,
 }: {
   endpoint: string;
   teacher?: boolean;
+  management?: ScoreManagement;
 }) {
+  const [editing, setEditing] = useState<{
+    record: ScoreRecord;
+    mode: "single" | "batch" | "delete";
+  } | null>(null);
   const [data, setData] = useState<ScorePage | null>(null);
   const [page, setPage] = useState(1);
   const [revision, setRevision] = useState(0);
@@ -111,10 +123,45 @@ export function ScoreHistory({
                     </div>
                     <p>
                       {record.reason}
+                      {record.is_modified && (
+                        <span className="badge">已修改</span>
+                      )}
                       {record.needs_reason && (
                         <span className="badge">待補原因</span>
                       )}
                     </p>
+                    {management &&
+                      (management.homeroom ||
+                        management.teacherId === record.creator_id) && (
+                        <div className="actions">
+                          <button
+                            className="secondary"
+                            onClick={() =>
+                              setEditing({ record, mode: "single" })
+                            }
+                          >
+                            修改這筆
+                          </button>
+                          {record.batch_id && (
+                            <button
+                              className="secondary"
+                              onClick={() =>
+                                setEditing({ record, mode: "batch" })
+                              }
+                            >
+                              修改同批
+                            </button>
+                          )}
+                          <button
+                            className="text-button danger-text"
+                            onClick={() =>
+                              setEditing({ record, mode: "delete" })
+                            }
+                          >
+                            刪除紀錄
+                          </button>
+                        </div>
+                      )}
                     {record.note && <p className="score-note">{record.note}</p>}
                     {teacher && record.batch_id && (
                       <p className="muted small">
@@ -150,6 +197,14 @@ export function ScoreHistory({
             </nav>
           </>
         )
+      )}
+      {editing && management && (
+        <ScoreChangeDialog
+          record={editing.record}
+          mode={editing.mode}
+          management={management}
+          onClose={() => setEditing(null)}
+        />
       )}
     </section>
   );

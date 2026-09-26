@@ -1027,3 +1027,25 @@ small {
 .pending-reasons textarea {
   margin-top: 0.5rem;
 }
+/* Keep long reasons readable inside the score confirmation and audit panels. */
+.score-preview-list {
+  max-height: 15rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  padding-left: 1.4rem;
+}
+.score-preview-list li {
+  margin-block: 0.45rem;
+}
+.student-dialog fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.score-audit .audit-changes div {
+  grid-template-columns: 4.5em minmax(0, 1fr);
+}
+.audit-changes dd {
+  overflow-wrap: anywhere;
+}

@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, ApiError, type Cohort } from "./api";
 import { ScoreHistory, type ScoreRecord } from "./ScoreHistory";
 import { PendingReasons } from "./PendingReasons";
+import { ScoreAuditHistory } from "./ScoreAuditHistory";
 
 type Kind = "positive" | "negative";
 type ScoreRoster = {
+  teacher_id: number;
   students: { id: number; name: string; seat_number: number; total: number }[];
   templates: Record<Kind, Record<string, string>>;
 };
@@ -31,6 +33,7 @@ export function ScoreWorkspace({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [showAudit, setShowAudit] = useState(false);
   const requests = useRef(new Map<string, string>());
   const submitting = useRef(false);
   const base = `/classes/${cohort.id}/`;
@@ -393,8 +396,31 @@ export function ScoreWorkspace({
                 <ScoreHistory
                   key={`${filter}-${revision}`}
                   teacher
+                  management={{
+                    base,
+                    teacherId: roster.teacher_id,
+                    homeroom: cohort.role === "homeroom",
+                    templates: roster.templates,
+                    onSaved: () => {
+                      setNotice("分數紀錄已更新。");
+                      setRevision((v) => v + 1);
+                    },
+                  }}
                   endpoint={`${base}scores/${filter ? `?student_id=${filter}` : ""}`}
                 />
+                {cohort.role === "homeroom" && (
+                  <>
+                    <button
+                      className="secondary"
+                      onClick={() => setShowAudit((v) => !v)}
+                    >
+                      {showAudit ? "收合分數查核" : "查看分數查核"}
+                    </button>
+                    {showAudit && (
+                      <ScoreAuditHistory key={revision} base={base} />
+                    )}
+                  </>
+                )}
               </>
             )}
           </>

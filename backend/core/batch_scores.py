@@ -117,7 +117,9 @@ class PendingReasonsView(APIView):
         with transaction.atomic():
             get_object_or_404(Cohort.objects.select_for_update(), pk=pk)
             member = require_teacher(request.user, pk)
-            records = editable_records(request.user, pk, member).filter(template="other", note="")
+            records = editable_records(request.user, pk, member).filter(
+                template="other", note="", deleted_at__isnull=True
+            )
             return score_page(request, records)
 
     def post(self, request, pk):
@@ -148,12 +150,19 @@ class PendingReasonsView(APIView):
                         "這次操作已完成，請勿以相同識別送出不同內容。"
                     )
                 return Response({"results": [record_data(r) for r in records]})
-            reject_unavailable({r.pk for r in records if r.template != "other" or r.note})
+            reject_unavailable(
+                {r.pk for r in records if r.deleted_at or r.template != "other" or r.note}
+            )
             result = []
             for record in records:
                 before = record_data(record)
                 record.note = values["note"]
-                record.save(update_fields=["note"])
+                record.revision += 1
+                record.is_modified = True
+                record.individually_modified = True
+                record.save(
+                    update_fields=["note", "revision", "is_modified", "individually_modified"]
+                )
                 after = record_data(record)
                 ScoreAuditEvent.objects.create(
                     record=record,

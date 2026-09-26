@@ -8,12 +8,15 @@ from core.memberships import (
     TeacherEventsView,
     TeachersView,
 )
+from core.score_changes import ScoreChangesView, ScoreEditPreviewView
 from core.scores import ScoreEventsView, ScoreRosterView, ScoresView, StudentScoresView
 from core.student_management import ResetStudentPasswordView, StudentDetailView, StudentEventsView
 from core.students import StudentLoginView, StudentMeView, StudentPasswordView, StudentsView
 from django.urls import path
 
 urlpatterns = [
+    path("api/classes/<int:pk>/scores/<int:record_id>/edit-preview/", ScoreEditPreviewView.as_view()),
+    path("api/classes/<int:pk>/score-changes/", ScoreChangesView.as_view()),
     path("api/classes/<int:pk>/pending-reasons/", PendingReasonsView.as_view()),
     path("api/classes/<int:pk>/score-batches/", ScoreBatchesView.as_view()),
     path("api/classes/<int:pk>/score-roster/", ScoreRosterView.as_view()),
