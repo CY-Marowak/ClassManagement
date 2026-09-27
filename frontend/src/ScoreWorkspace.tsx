@@ -97,6 +97,12 @@ export function ScoreWorkspace({
           ? `已記錄 ${saved.results.length} 位學生，每人 ${kind === "positive" ? "加分" : "扣分"} ${value}。未發放點數。`
           : `已記錄 ${saved.student_name}：${saved.kind === "positive" ? "加分" : "扣分"} ${saved.score}。未發放點數。`,
       );
+      setMode("single");
+      setStudentId("");
+      setSelected([]);
+      setKind("positive");
+      setScore("1");
+      setTemplate("participation");
       setNote("");
       setRevision((x) => x + 1);
     } catch (e) {
