@@ -23,6 +23,7 @@ def require_teacher(user, cohort_id, homeroom=False):
 
 def record_data(record):
     return {
+        "awarded_points": record.award.points if hasattr(record, "award") else None,
         "revision": record.revision,
         "is_modified": record.is_modified,
         "deleted_at": record.deleted_at.isoformat() if record.deleted_at else None,
@@ -50,7 +51,7 @@ class ScorePagination(PageNumberPagination):
 def score_page(request, records, total=None):
     paginator = ScorePagination()
     page: list[ScoreRecord] | None = paginator.paginate_queryset(
-        records.select_related("student__user").order_by("-created_at", "-pk"), request
+        records.select_related("student__user", "award").order_by("-created_at", "-pk"), request
     )
     assert page is not None
     response = paginator.get_paginated_response([record_data(record) for record in page])

@@ -55,6 +55,9 @@ class ScoreEditPreviewView(APIView):
                     "actor": request.user.pk,
                     "scope": scope,
                     "targets": [[r.pk, r.revision] for r in targets],
+                    "awards": {
+                        str(r.pk): r.award.points if hasattr(r, "award") else None for r in targets
+                    },
                 },
                 salt=PREVIEW_SALT,
             )
@@ -131,6 +134,15 @@ class ScoreChangesView(APIView):
             reject_unavailable(
                 {r.pk for r in records if r.deleted_at or r.revision != expected[r.pk]}
             )
+            if values["action"] == "delete":
+                reject_unavailable(
+                    {
+                        r.pk
+                        for r in records
+                        if (r.award.points if hasattr(r, "award") else None)
+                        != preview.get("awards", {}).get(str(r.pk))
+                    }
+                )
             results = []
             for record in records:
                 before = record_data(record)

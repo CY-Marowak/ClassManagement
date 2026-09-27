@@ -825,6 +825,30 @@ small {
   margin: 0;
   min-width: 0;
 }
+.award-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.award-form .editor {
+  max-width: none;
+  margin-top: 20px;
+}
+.award-form .score-record:last-child {
+  border-bottom: 0;
+}
+.award-toolbar {
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+.award-toolbar label {
+  margin: 0;
+}
+.award-form .check-row {
+  align-self: center;
+}
 .score-form label,
 .score-filter {
   display: block;

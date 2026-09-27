@@ -151,6 +151,11 @@ export function ScoreChangeDialog({
                     {r.seat_number} 號 · {r.student_name}：{r.score} 分 ·{" "}
                     {r.reason}
                     {r.note ? ` · ${r.note}` : ""}
+                    {deleting && r.awarded_points !== null && (
+                      <p className="notice">
+                        已發放 {r.awarded_points} 點，刪除後不回收。
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

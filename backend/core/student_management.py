@@ -5,7 +5,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ClassMember, Cohort, Student, StudentAuditEvent, User
+from .models import ClassMember, Cohort, PointAwardBatch, Student, StudentAuditEvent, User
 from .permissions import IsTeacher
 from .sessions import revoke_user_sessions
 from .students import StudentRowSerializer, student_data
@@ -54,6 +54,7 @@ class StudentDetailView(APIView):
                 User.objects.select_for_update(), pk=user_id, account_type="student"
             )
             user.delete()  # Cascades through the student to all of their audit history.
+            PointAwardBatch.objects.filter(cohort_id=pk, transactions__isnull=True).delete()
             revoke_user_sessions([user_id])
         return Response({"detail": "學生帳號及全部歷史已永久刪除，無法復原；所有原登入已失效。"})
 

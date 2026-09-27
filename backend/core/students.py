@@ -228,6 +228,7 @@ class StudentMeView(APIView):
         return Response(
             {
                 **student_data(student),
+                "point_balance": student.point_balance,
                 "cohort": {"id": student.cohort_id, "name": student.cohort.name},
             }
         )

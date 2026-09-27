@@ -3,6 +3,7 @@ import { api } from "./api";
 import { ScoreChangeDialog, type ScoreManagement } from "./ScoreChangeDialog";
 
 export type ScoreRecord = {
+  awarded_points: number | null;
   creator_id: number;
   template: string;
   is_modified: boolean;
@@ -123,6 +124,11 @@ export function ScoreHistory({
                     </div>
                     <p>
                       {record.reason}
+                      {record.awarded_points !== null && (
+                        <span className="badge">
+                          已發放 {record.awarded_points} 點
+                        </span>
+                      )}
                       {record.is_modified && (
                         <span className="badge">已修改</span>
                       )}

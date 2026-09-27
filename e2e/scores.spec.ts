@@ -4,6 +4,170 @@ import { resolve } from "node:path";
 
 test.use({ actionTimeout: 10000 });
 
+test("teachers award own sources once, recover stale selections, and keep points after deletion", async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(90000);
+  const suffix = Date.now();
+  await teacher(page, `award-${suffix}@example.com`, "發點導師");
+  const cohort = await post(page, "/classes/", {
+    name: "獎勵班",
+    entry_year: 2026,
+    current_grade: 1,
+  });
+  const base = `/classes/${cohort.id}/`;
+  await post(page, base + "students/", { text: "1\t小明\t001\n2\t小美\t002" });
+  const students = await (
+    await page.request.get(`/api${base}students/`)
+  ).json();
+  const records = (
+    await post(page, base + "score-batches/", {
+      student_ids: students.map((s: { id: number }) => s.id),
+      kind: "positive",
+      score: 0,
+      template: "participation",
+      note: "合作練習",
+      request_id: crypto.randomUUID(),
+    })
+  ).results;
+  const coContext = await browser.newContext();
+  const co = await coContext.newPage();
+  await teacher(co, `award-co-${suffix}@example.com`, "共同發點教師");
+  const code = (await (await page.request.get(`/api${base}teachers/`)).json())
+    .application_code;
+  const member = await post(co, "/teacher-applications/", {
+    application_code: code,
+  });
+  await post(page, base + `teachers/${member.id}/`, {
+    action: "approve",
+    revision: 1,
+  });
+  await post(co, base + "scores/", {
+    student_id: students[0].id,
+    kind: "positive",
+    score: 1,
+    template: "helping",
+    note: "共同教師獎勵",
+    request_id: crypto.randomUUID(),
+  });
+  await page.reload();
+  await page.getByRole("button", { name: "發點數", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "發點數", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("共同教師獎勵", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  await page.getByRole("button", { name: "全選本頁" }).click();
+  await page.getByLabel("小明的發放點數").fill("3");
+  await page.screenshot({
+    path: ".local/08-pending-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: ".local/08-pending-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  // A source changes in another tab after selection. Nothing may be awarded.
+  const preview = await (
+    await page.request.get(`/api${base}scores/${records[1].id}/edit-preview/`)
+  ).json();
+  await post(page, base + "score-changes/", {
+    action: "edit",
+    preview_token: preview.token,
+    request_id: crypto.randomUUID(),
+    kind: "positive",
+    score: 2,
+    template: "helping",
+    note: "最新原因",
+  });
+  await page.getByRole("button", { name: "發放所選點數" }).click();
+  await expect(page.getByRole("alert")).toContainText("小美");
+  await expect(page.getByRole("alert")).toContainText("整批未儲存");
+  await page.getByRole("button", { name: "重新整理發點名單" }).click();
+  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "全選本頁" }).click();
+  await page.getByLabel("小明的發放點數").fill("3");
+  await page.route(
+    `**/api${base}point-awards/`,
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.status()).toBe(201);
+      await route.abort("failed");
+    },
+    { times: 1 },
+  );
+  await page.getByRole("button", { name: "發放所選點數" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByLabel("小明的發放點數")).toHaveValue("3");
+  await page.getByRole("button", { name: "發放所選點數" }).click();
+  await expect(page.locator('.notice[role="status"]')).toContainText(
+    "已發放 4 點，共 2 筆",
+  );
+  await expect(
+    page.getByText("本週本人已發放 4 點 · 2 筆", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("發點狀態").selectOption("awarded");
+  await expect(page.getByText("已發放 3 點", { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: ".local/08-awards-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: ".local/08-awards-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.getByRole("button", { name: "← 返回我的班級" }).click();
+  await page.getByRole("button", { name: "記分", exact: true }).click();
+  await page.getByRole("button", { name: "查看分數紀錄 →" }).click();
+  const row = page.locator(".score-record").filter({ hasText: "合作練習" });
+  await expect(row).toContainText("已發放 3 點");
+  await row.getByRole("button", { name: "刪除紀錄" }).click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "已發放 3 點，刪除後不回收",
+  );
+  await page.getByRole("button", { name: "確認刪除紀錄" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByRole("button", { name: "← 返回我的班級" }).click();
+  await page.getByRole("button", { name: "發點數", exact: true }).click();
+  await page.getByLabel("發點狀態").selectOption("awarded");
+  const awarded = page.getByRole("region", { name: "1 號 · 小明" });
+  await expect(awarded).toContainText("已發放 3 點");
+  await expect(awarded).toContainText("來源已刪除");
+  await co.reload();
+  await co.getByRole("button", { name: "發點數", exact: true }).click();
+  await expect(co.getByRole("checkbox")).toHaveCount(1);
+  await expect(
+    co.getByText("本週本人已發放 0 點 · 0 筆", { exact: true }),
+  ).toBeVisible();
+  await co.getByRole("button", { name: "全選本頁" }).click();
+  await co.getByRole("button", { name: "發放所選點數" }).click();
+  await expect(co.locator('.notice[role="status"]')).toContainText(
+    "已發放 1 點，共 1 筆",
+  );
+  await post(page, base + `teachers/${member.id}/`, {
+    action: "remove",
+    revision: 2,
+  });
+  await co.getByRole("button", { name: "重新整理發點名單" }).click();
+  await expect(co.getByRole("alert")).toBeVisible();
+  await expect(co.getByRole("checkbox")).toHaveCount(0);
+  await coContext.close();
+});
+
 test("score edits preserve exceptions, delete safely, and show audit differences", async ({
   page,
 }) => {

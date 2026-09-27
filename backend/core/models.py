@@ -102,6 +102,7 @@ class TeacherAuditEvent(models.Model):
 
 
 class Student(models.Model):
+    point_balance = models.PositiveBigIntegerField(default=0)
     behavior_score_total = models.BigIntegerField(default=0)
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE, related_name="students")
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student")
@@ -194,3 +195,39 @@ class ScoreAuditEvent(models.Model):
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PointAwardBatch(models.Model):
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+    actor = models.ForeignKey(User, on_delete=models.PROTECT)
+    actor_name = models.CharField(max_length=80)
+    request_id = models.UUIDField()
+    request_fingerprint = models.CharField(max_length=64)
+    item_count = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cohort", "actor", "request_id"], name="point_award_request_once"
+            )
+        ]
+
+
+class PointTransaction(models.Model):
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="point_transactions"
+    )
+    batch = models.ForeignKey(
+        PointAwardBatch, on_delete=models.CASCADE, related_name="transactions"
+    )
+    record = models.OneToOneField(ScoreRecord, on_delete=models.CASCADE, related_name="award")
+    points = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(points__gte=1, points__lte=100), name="award_points_range"
+            )
+        ]
