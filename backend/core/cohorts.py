@@ -4,7 +4,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ClassMember, Cohort, User
+from .models import ClassMember, Cohort, Mascot, User
 from .permissions import IsTeacher
 from .serializers import CohortSerializer, DeleteCohortSerializer
 from .sessions import revoke_user_sessions
@@ -28,6 +28,7 @@ class ClassesView(APIView):
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
             cohort = serializer.save()
+            Mascot.objects.create(cohort=cohort)
             ClassMember.objects.create(cohort=cohort, user=request.user, role="homeroom")
         return Response({**serializer.data, "role": "homeroom"}, status=201)
 

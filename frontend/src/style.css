@@ -49,7 +49,91 @@ textarea:focus {
 }
 .student-home {
   text-align: center;
-  max-width: 620px;
+  max-width: 700px;
+}
+
+.student-points {
+  background: #eef3e8;
+  border: 1px solid #dce5d7;
+  border-radius: 14px;
+  padding: 20px;
+  margin-top: 24px;
+}
+.student-points strong {
+  font-size: 32px;
+  margin-left: 12px;
+}
+.student-points .actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.mascot-page {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: left;
+}
+.mascot-page .page-title {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.mascot-growth {
+  text-align: center;
+  padding: 22px;
+  background: #f0f4e9;
+  border: 1px solid #dce5d7;
+  border-radius: 20px;
+  margin: 24px 0;
+}
+.mascot-art {
+  position: relative;
+  width: 190px;
+  margin: auto;
+}
+.mascot-art .animal-avatar,
+.student-home .mascot-art .animal-avatar {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+}
+.mascot-art > span {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  font-size: 32px;
+  color: #a36c21;
+  background: #fffaf0;
+  border-radius: 50%;
+  width: 50px;
+}
+.mascot-growth progress {
+  width: 100%;
+  height: 18px;
+  accent-color: #477e66;
+}
+.feeding-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+.feeding-summary strong {
+  font-size: 25px;
+}
+.feeding-form {
+  border: 1px solid #dce5d7;
+  border-radius: 14px;
+  padding: 20px;
+}
+.feeding-form select {
+  margin-bottom: 16px;
+}
+.point-history {
+  margin-top: 30px;
+}
+.point-transaction {
+  padding: 16px 0;
+  border-bottom: 1px solid #e3e8dd;
+  overflow-wrap: anywhere;
 }
 .student-home .page-title {
   margin: 0;

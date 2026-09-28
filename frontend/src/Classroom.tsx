@@ -5,6 +5,7 @@ import { TeacherApplications } from "./TeacherApplications";
 import { TeacherManagement } from "./TeacherManagement";
 import { ScoreWorkspace } from "./ScoreWorkspace";
 import { PointAwards } from "./PointAwards";
+import { Mascot } from "./Mascot";
 
 function ClassForm({
   cohort,
@@ -230,6 +231,7 @@ export function Classroom({
   const [teachers, setTeachers] = useState<Cohort | null>(null);
   const [scores, setScores] = useState<Cohort | null>(null);
   const [awards, setAwards] = useState<Cohort | null>(null);
+  const [mascot, setMascot] = useState<Cohort | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Cohort | "new" | null>(null);
   const [deleting, setDeleting] = useState<Cohort | null>(null);
@@ -269,6 +271,8 @@ export function Classroom({
               setRoster(null);
               setTeachers(null);
               setScores(null);
+              setAwards(null);
+              setMascot(null);
             }}
           >
             ▦ <span>我的班級</span>
@@ -295,7 +299,13 @@ export function Classroom({
         </div>
       </aside>
       <main className="workspace-main">
-        {awards ? (
+        {mascot ? (
+          <Mascot
+            key={mascot.id}
+            cohortId={mascot.id}
+            onBack={() => setMascot(null)}
+          />
+        ) : awards ? (
           <PointAwards
             key={awards.id}
             cohort={awards}
@@ -464,6 +474,12 @@ export function Classroom({
                       onClick={() => setAwards(c)}
                     >
                       發點數
+                    </button>
+                    <button
+                      className="secondary full"
+                      onClick={() => setMascot(c)}
+                    >
+                      班級吉祥物
                     </button>
                     <p className="muted">
                       {c.entry_year} 年入學 · 同一屆，一起成長

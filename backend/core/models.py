@@ -37,6 +37,10 @@ def teacher_application_code():
     return "T-" + secrets.token_hex(8).upper()
 
 
+def mascot_animal():
+    return secrets.choice(["cat", "dog", "rabbit"])
+
+
 class Cohort(models.Model):
     application_code = models.CharField(
         max_length=18, unique=True, default=teacher_application_code, editable=False
@@ -52,6 +56,16 @@ class Cohort(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(12)]
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Mascot(models.Model):
+    cohort = models.OneToOneField(Cohort, on_delete=models.CASCADE, related_name="mascot")
+    animal = models.CharField(
+        max_length=10,
+        choices=[("cat", "貓"), ("dog", "狗"), ("rabbit", "兔")],
+        default=mascot_animal,
+    )
+    exp = models.PositiveBigIntegerField(default=0)
 
 
 class ClassMember(models.Model):
@@ -215,19 +229,46 @@ class PointAwardBatch(models.Model):
 
 
 class PointTransaction(models.Model):
+    kind = models.CharField(
+        max_length=8, choices=[("award", "獲得點數"), ("feed", "餵食")], default="award"
+    )
+    request_id = models.UUIDField(null=True, blank=True)
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="point_transactions"
     )
     batch = models.ForeignKey(
-        PointAwardBatch, on_delete=models.CASCADE, related_name="transactions"
+        PointAwardBatch, on_delete=models.CASCADE, related_name="transactions", null=True
     )
-    record = models.OneToOneField(ScoreRecord, on_delete=models.CASCADE, related_name="award")
-    points = models.PositiveSmallIntegerField()
+    record = models.OneToOneField(
+        ScoreRecord, on_delete=models.CASCADE, related_name="award", null=True
+    )
+    points = models.SmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(points__gte=1, points__lte=100), name="award_points_range"
-            )
+                condition=(
+                    models.Q(
+                        kind="award",
+                        points__gte=1,
+                        points__lte=100,
+                        batch__isnull=False,
+                        record__isnull=False,
+                        request_id__isnull=True,
+                    )
+                    | models.Q(
+                        kind="feed",
+                        points__gte=-5,
+                        points__lte=-1,
+                        batch__isnull=True,
+                        record__isnull=True,
+                        request_id__isnull=False,
+                    )
+                ),
+                name="point_transaction_kind_range",
+            ),
+            models.UniqueConstraint(
+                fields=["student", "request_id"], name="student_feed_request_once"
+            ),
         ]

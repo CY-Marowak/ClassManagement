@@ -26,9 +26,13 @@ export type Student = {
   student_number: string;
   avatar: "cat" | "dog" | "rabbit";
 };
-export type StudentProfile = Student & { cohort: { id: number; name: string } };
+export type StudentProfile = Student & {
+  cohort: { id: number; name: string };
+  point_balance: number;
+};
 
 const fieldNames: Record<string, string> = {
+  points: "點數",
   student_ids: "學生",
   record_ids: "紀錄",
   score: "分數",
@@ -57,6 +61,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public unavailableIds: number[] = [],
+    public status?: number,
   ) {
     super(message);
   }
@@ -93,7 +98,11 @@ export async function api<T>(
             `${fieldNames[key] || key}：${Array.isArray(value) ? value.join(" ") : value}`,
         )
         .join("；");
-    throw new ApiError(message, (data.unavailable_ids || []).map(Number));
+    throw new ApiError(
+      message,
+      (data.unavailable_ids || []).map(Number),
+      response.status,
+    );
   }
   return data as T;
 }

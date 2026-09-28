@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api, type StudentProfile, type StudentSession } from "./api";
 import { AnimalAvatar } from "./AnimalAvatar";
 import { ScoreHistory } from "./ScoreHistory";
+import { Mascot } from "./Mascot";
 
 export function StudentAccess({
   changing = false,
@@ -146,6 +147,10 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [feeding, setFeeding] = useState(false);
+  const updateBalance = useCallback((balance: number) => {
+    setProfile((old) => (old ? { ...old, point_balance: balance } : old));
+  }, []);
   useEffect(() => {
     api<StudentProfile>("/student/me/")
       .then(setProfile)
@@ -181,7 +186,14 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             {error}
           </p>
         )}
-        {profile ? (
+        {profile && feeding ? (
+          <Mascot
+            cohortId={profile.cohort.id}
+            studentId={profile.id}
+            onBalance={updateBalance}
+            onBack={() => setFeeding(false)}
+          />
+        ) : profile ? (
           <>
             <p className="eyebrow">我的班級</p>
             <p className="student-cohort">{profile.cohort.name}</p>
@@ -189,6 +201,38 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             <h1>{profile.name}</h1>
             <p className="badge">座號 {profile.seat_number}</p>
             <p className="muted">這是你的固定動物夥伴，一起開始班級日常。</p>
+            <section className="student-points" aria-label="我的點數">
+              <p>
+                可用點數 <strong>{profile.point_balance}</strong>
+              </p>
+              <p className="muted small">
+                點數可自由用來餵食，和分數分開計算。
+              </p>
+              <div className="actions">
+                <button className="primary" onClick={() => setFeeding(true)}>
+                  餵食班級吉祥物
+                </button>
+                <button
+                  className="text-button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError("");
+                    try {
+                      setProfile(await api<StudentProfile>("/student/me/"));
+                    } catch (e) {
+                      setError(
+                        e instanceof Error ? e.message : "無法更新點數。",
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  更新點數
+                </button>
+              </div>
+            </section>
             <ScoreHistory endpoint="/student/scores/" />
           </>
         ) : (
