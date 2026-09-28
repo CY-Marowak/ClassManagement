@@ -46,8 +46,8 @@ def transaction_data(entry):
         "created_at": entry.created_at.isoformat(),
         "source": {
             "id": record.pk,
-            "reason": record.reason,
-            "note": record.note,
+            "reason": record.reason if not record.deleted_at else "",
+            "note": record.note if not record.deleted_at else "",
             "is_modified": record.is_modified,
             "is_deleted": record.deleted_at is not None,
         }

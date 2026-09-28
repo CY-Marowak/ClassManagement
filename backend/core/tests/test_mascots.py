@@ -193,6 +193,8 @@ class MascotTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         data = student.get("/api/student/mascot/").json()
         self.assertTrue(data["transactions"][0]["source"]["is_deleted"])
+        self.assertEqual(data["transactions"][0]["source"]["reason"], "")
+        self.assertEqual(data["transactions"][0]["source"]["note"], "")
         self.assertEqual(data["transactions"][0]["points"], 1)
         self.assertEqual(data["point_balance"], 21)
 

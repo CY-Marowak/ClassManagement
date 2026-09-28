@@ -109,7 +109,25 @@ test("student sees points, feeds voluntarily, safely retries and shares class gr
     student.getByText("累積總餵食量 2 exp", { exact: true }),
   ).toBeVisible();
   await student.getByLabel("餵食點數").selectOption("3");
+  let failedRefresh = false;
+  await student.route("**/api/student/mascot/", async (route) => {
+    if (route.request().method() === "GET" && !failedRefresh) {
+      failedRefresh = true;
+      return route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "暫時無法更新" }),
+      });
+    }
+    await route.continue();
+  });
   await student.getByRole("button", { name: "確認餵食", exact: true }).click();
+  await expect(student.getByRole("alert")).toContainText("餵食已完成");
+  await student.getByRole("button", { name: "返回我的頁面" }).click();
+  await expect(
+    student.getByRole("region", { name: "我的點數", exact: true }),
+  ).toContainText("可用點數 3");
+  await student.getByRole("button", { name: "餵食班級吉祥物" }).click();
   await expect(
     student.getByText("今日還可餵 0 點", { exact: true }),
   ).toBeVisible();

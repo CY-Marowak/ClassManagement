@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { api, ApiError, type Student } from "./api";
 import { AnimalAvatar, animalNames } from "./AnimalAvatar";
 
@@ -50,6 +56,7 @@ export function Mascot({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [points, setPoints] = useState(1);
+  const readVersion = useRef(0);
   const storageKey = `cm-feed-${studentId}`;
   const [pending, setPending] = useState<FeedRequest | null>(() => {
     if (!studentId) return null;
@@ -67,12 +74,19 @@ export function Mascot({
     }
   });
   const reload = useCallback(async () => {
-    if (studentId) {
-      const result = await api<StudentMascotState>("/student/mascot/");
-      setAccount(result);
-      setMascot(result.mascot);
-    } else {
-      setMascot(await api<MascotState>(`/classes/${cohortId}/mascot/`));
+    const version = ++readVersion.current;
+    try {
+      if (studentId) {
+        const result = await api<StudentMascotState>("/student/mascot/");
+        if (version !== readVersion.current) return;
+        setAccount(result);
+        setMascot(result.mascot);
+      } else {
+        const result = await api<MascotState>(`/classes/${cohortId}/mascot/`);
+        if (version === readVersion.current) setMascot(result);
+      }
+    } catch (e) {
+      if (version === readVersion.current) throw e;
     }
   }, [cohortId, studentId]);
   async function refresh() {
@@ -99,6 +113,7 @@ export function Mascot({
       });
     return () => {
       active = false;
+      readVersion.current++;
     };
   }, [reload]);
   useEffect(() => {
@@ -118,6 +133,7 @@ export function Mascot({
   async function feed(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
+    readVersion.current++;
     const request = pending || { points, request_id: crypto.randomUUID() };
     setError("");
     setNotice("");
@@ -284,13 +300,16 @@ export function Mascot({
                     </time>
                     {entry.source && (
                       <p>
-                        {entry.source.reason}
-                        {entry.source.note && ` · ${entry.source.note}`}
-                        {entry.source.is_deleted
-                          ? "（來源已刪除，點數保留）"
-                          : entry.source.is_modified
-                            ? "（來源已修改，點數保留）"
-                            : ""}
+                        {entry.source.is_deleted ? (
+                          "來源已刪除，點數保留"
+                        ) : (
+                          <>
+                            {entry.source.reason}
+                            {entry.source.note && ` · ${entry.source.note}`}
+                            {entry.source.is_modified &&
+                              "（來源已修改，點數保留）"}
+                          </>
+                        )}
                       </p>
                     )}
                   </li>

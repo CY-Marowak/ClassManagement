@@ -191,7 +191,14 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             cohortId={profile.cohort.id}
             studentId={profile.id}
             onBalance={updateBalance}
-            onBack={() => setFeeding(false)}
+            onBack={() => {
+              setFeeding(false);
+              setProfile(null);
+              setError("");
+              api<StudentProfile>("/student/me/")
+                .then(setProfile)
+                .catch((e) => setError(e.message));
+            }}
           />
         ) : profile ? (
           <>
