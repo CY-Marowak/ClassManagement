@@ -309,6 +309,7 @@ export function PointAwards({
                         點
                       </p>
                       <button
+                        className="primary"
                         disabled={
                           busy ||
                           !chosen.length ||
