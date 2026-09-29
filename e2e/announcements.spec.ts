@@ -45,6 +45,37 @@ test("homeroom publishes rich text and student reads announcement before points"
   await page.getByRole("button", { name: "新增公告", exact: true }).click();
   await page.getByLabel("公告標題").fill("戶外教學");
   const editor = page.getByRole("textbox", { name: "公告內文" });
+  await editor.click();
+  await editor.evaluate((el) => {
+    let html = "<p>明天帶水壺</p>";
+    for (let i = 0; i < 7; i++)
+      html = `<ul><li><p>外部文章</p>${html}</li></ul>`;
+    const clipboardData = new DataTransfer();
+    clipboardData.setData("text/html", html);
+    el.dispatchEvent(
+      new ClipboardEvent("paste", {
+        clipboardData,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  });
+  await page.getByRole("button", { name: "發布公告", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("全選內文");
+  await expect(page.getByRole("alert")).toContainText("清除格式");
+  await editor.click();
+  await editor.press("ControlOrMeta+a");
+  await page.getByRole("button", { name: "清除格式", exact: true }).click();
+  await page.getByRole("button", { name: "發布公告", exact: true }).click();
+  await expect(page.locator(".announcement-card")).toContainText("明天帶水壺");
+  await page
+    .locator(".announcement-card")
+    .getByRole("button", { name: "刪除", exact: true })
+    .click();
+  await page.getByRole("button", { name: "確認刪除公告", exact: true }).click();
+  await expect(page.locator(".announcement-card")).toHaveCount(0);
+  await page.getByRole("button", { name: "新增公告", exact: true }).click();
+  await page.getByLabel("公告標題").fill("戶外教學");
   await editor.fill("明天帶水壺");
   await editor.press("ControlOrMeta+a");
   await page.getByRole("button", { name: "粗體", exact: true }).click();
@@ -52,6 +83,7 @@ test("homeroom publishes rich text and student reads announcement before points"
   await page.getByRole("button", { name: "底線", exact: true }).click();
   await page.getByLabel("字體大小").selectOption("20px");
   await page.getByLabel("文字顏色").selectOption("#b42318");
+  await expect(editor.locator("em")).toHaveCSS("font-synthesis", "style");
   await page.screenshot({
     path: ".local/10-editor-desktop.png",
     fullPage: true,
@@ -69,6 +101,7 @@ test("homeroom publishes rich text and student reads announcement before points"
   );
   for (const tag of ["strong", "em", "u"])
     await expect(card.locator(tag)).toHaveText("明天帶水壺");
+  await expect(card.locator("em")).toHaveCSS("font-synthesis", "style");
   await card.getByRole("button", { name: "置頂", exact: true }).click();
   await expect(card.getByText("置頂", { exact: true })).toBeVisible();
   const context = await browser.newContext();

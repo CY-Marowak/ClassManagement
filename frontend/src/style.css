@@ -30,6 +30,7 @@
 }
 .announcement-body,
 .announcement-editor .tiptap {
+  font-synthesis: style;
   color: #183b36;
   font-size: 16px;
   white-space: pre-wrap;

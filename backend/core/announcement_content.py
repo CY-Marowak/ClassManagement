@@ -11,7 +11,10 @@ def validate_document(value):
     nodes = 0
 
     def invalid():
-        raise serializers.ValidationError("公告格式不支援，請使用工具列的文字格式。")
+        raise serializers.ValidationError(
+            "公告格式不支援。請先點擊內文編輯區，按 Ctrl+A（Mac：⌘A）全選內文，"
+            "再點擊工具列的「清除格式」，確認內容後重新送出。"
+        )
 
     def visit(node, allowed, depth=0):
         nonlocal nodes
