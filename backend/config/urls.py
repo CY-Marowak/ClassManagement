@@ -1,4 +1,5 @@
 from core import views
+from core.announcements import AnnouncementChangeView, AnnouncementsView, StudentAnnouncementsView
 from core.awards import PointAwardsView
 from core.batch_scores import PendingReasonsView, ScoreBatchesView
 from core.cohorts import ClassDetailView, ClassesView
@@ -17,6 +18,9 @@ from core.students import StudentLoginView, StudentMeView, StudentPasswordView, 
 from django.urls import path
 
 urlpatterns = [
+    path("api/classes/<int:pk>/announcements/", AnnouncementsView.as_view()),
+    path("api/classes/<int:pk>/announcements/<int:announcement_id>/", AnnouncementChangeView.as_view()),
+    path("api/student/announcements/", StudentAnnouncementsView.as_view()),
     path("api/student/mascot/", StudentMascotView.as_view()),
     path("api/classes/<int:pk>/mascot/", ClassMascotView.as_view()),
     path("api/classes/<int:pk>/point-awards/", PointAwardsView.as_view()),

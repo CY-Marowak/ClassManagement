@@ -211,6 +211,35 @@ class ScoreAuditEvent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class Announcement(models.Model):
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE, related_name="announcements")
+    creator = models.ForeignKey(User, on_delete=models.PROTECT)
+    creator_name = models.CharField(max_length=80)
+    title = models.CharField(max_length=100)
+    body = models.JSONField()
+    is_pinned = models.BooleanField(default=False)
+    revision = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(null=True)
+    deleted_at = models.DateTimeField(null=True)
+
+
+class AnnouncementOperation(models.Model):
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE)
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+    actor = models.ForeignKey(User, on_delete=models.PROTECT)
+    request_id = models.UUIDField()
+    fingerprint = models.CharField(max_length=64)
+    result = models.JSONField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cohort", "actor", "request_id"], name="announcement_request_once"
+            )
+        ]
+
+
 class PointAwardBatch(models.Model):
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
     actor = models.ForeignKey(User, on_delete=models.PROTECT)
