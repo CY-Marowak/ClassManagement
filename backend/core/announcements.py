@@ -73,6 +73,7 @@ def save_result(item, user, values, digest, result):
 
 def announcement_data(item):
     return {
+        "comment_count": item.comments.filter(deleted_at__isnull=True).count(),
         "id": item.pk,
         "title": item.title,
         "body": item.body,
@@ -169,16 +170,21 @@ class AnnouncementChangeView(APIView):
             return Response(result)
 
 
+def locked_announcement_student(request):
+    student = get_object_or_404(Student, user=request.user)
+    get_object_or_404(Cohort.objects.select_for_update(), pk=student.cohort_id)
+    student = get_object_or_404(Student.objects.select_related("user"), pk=student.pk)
+    if student.must_change_password or (
+        request.session.get("_auth_user_hash") != student.user.get_session_auth_hash()
+    ):
+        raise PermissionDenied("登入已失效，請重新登入並完成密碼修改。")
+    return student
+
+
 class StudentAnnouncementsView(APIView):
     permission_classes = [IsStudent, IsReadyUser]
 
     def get(self, request):
-        student = get_object_or_404(Student, user=request.user)
         with transaction.atomic():
-            get_object_or_404(Cohort.objects.select_for_update(), pk=student.cohort_id)
-            student = get_object_or_404(Student.objects.select_related("user"), pk=student.pk)
-            if student.must_change_password or (
-                request.session.get("_auth_user_hash") != student.user.get_session_auth_hash()
-            ):
-                raise PermissionDenied("登入已失效，請重新登入並完成密碼修改。")
+            student = locked_announcement_student(request)
             return announcement_page(request, student.cohort_id)

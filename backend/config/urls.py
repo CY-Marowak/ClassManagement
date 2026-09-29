@@ -3,6 +3,7 @@ from core.announcements import AnnouncementChangeView, AnnouncementsView, Studen
 from core.awards import PointAwardsView
 from core.batch_scores import PendingReasonsView, ScoreBatchesView
 from core.cohorts import ClassDetailView, ClassesView
+from core.comments import CommentChangeView, CommentsView, StudentCommentsView
 from core.mascots import ClassMascotView, StudentMascotView
 from core.memberships import (
     TeacherApplicationsView,
@@ -18,13 +19,28 @@ from core.students import StudentLoginView, StudentMeView, StudentPasswordView, 
 from django.urls import path
 
 urlpatterns = [
+    path(
+        "api/classes/<int:pk>/announcements/<int:announcement_id>/comments/<int:comment_id>/",
+        CommentChangeView.as_view(),
+    ),
+    path(
+        "api/classes/<int:pk>/announcements/<int:announcement_id>/comments/", CommentsView.as_view()
+    ),
+    path(
+        "api/student/announcements/<int:announcement_id>/comments/", StudentCommentsView.as_view()
+    ),
     path("api/classes/<int:pk>/announcements/", AnnouncementsView.as_view()),
-    path("api/classes/<int:pk>/announcements/<int:announcement_id>/", AnnouncementChangeView.as_view()),
+    path(
+        "api/classes/<int:pk>/announcements/<int:announcement_id>/",
+        AnnouncementChangeView.as_view(),
+    ),
     path("api/student/announcements/", StudentAnnouncementsView.as_view()),
     path("api/student/mascot/", StudentMascotView.as_view()),
     path("api/classes/<int:pk>/mascot/", ClassMascotView.as_view()),
     path("api/classes/<int:pk>/point-awards/", PointAwardsView.as_view()),
-    path("api/classes/<int:pk>/scores/<int:record_id>/edit-preview/", ScoreEditPreviewView.as_view()),
+    path(
+        "api/classes/<int:pk>/scores/<int:record_id>/edit-preview/", ScoreEditPreviewView.as_view()
+    ),
     path("api/classes/<int:pk>/score-changes/", ScoreChangesView.as_view()),
     path("api/classes/<int:pk>/pending-reasons/", PendingReasonsView.as_view()),
     path("api/classes/<int:pk>/score-batches/", ScoreBatchesView.as_view()),

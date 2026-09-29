@@ -5,14 +5,14 @@ SIZES = {"14px", "16px", "20px"}
 BLOCKS = {"paragraph", "bulletList", "orderedList"}
 
 
-def validate_document(value):
+def validate_document(value, max_length=5000, label="公告"):
     """Accept the editor's small document schema, never arbitrary HTML or CSS."""
     text_parts = []
     nodes = 0
 
     def invalid():
         raise serializers.ValidationError(
-            "公告格式不支援。請先點擊內文編輯區，按 Ctrl+A（Mac：⌘A）全選內文，"
+            f"{label}格式不支援。請先點擊內文編輯區，按 Ctrl+A（Mac：⌘A）全選內文，"
             "再點擊工具列的「清除格式」，確認內容後重新送出。"
         )
 
@@ -94,6 +94,6 @@ def validate_document(value):
 
     visit(value, {"doc"})
     text = "".join(text_parts)
-    if not text.strip() or len(text) > 5000:
-        raise serializers.ValidationError("內文需有 1～5000 字，格式不計字數。")
+    if not text.strip() or len(text) > max_length:
+        raise serializers.ValidationError(f"內文需有 1～{max_length} 字，格式不計字數。")
     return value

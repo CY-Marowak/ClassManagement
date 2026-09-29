@@ -13,10 +13,14 @@ export function AnnouncementEditor({
   body,
   disabled,
   onChange,
+  label = "公告內文",
+  maxLength = 5000,
 }: {
   body: JSONContent;
   disabled: boolean;
   onChange: (body: JSONContent) => void;
+  label?: string;
+  maxLength?: number;
 }) {
   const editor = useEditor({
     extensions: [
@@ -37,7 +41,7 @@ export function AnnouncementEditor({
     editorProps: {
       attributes: {
         role: "textbox",
-        "aria-label": "公告內文",
+        "aria-label": label,
         "aria-multiline": "true",
       },
       transformPastedHTML: normalizePaste,
@@ -143,7 +147,7 @@ export function AnnouncementEditor({
       </fieldset>
       <EditorContent editor={editor} />
       <p className="muted small">
-        內文 1～5000 字；可貼上文字，支援的格式會保留。
+        內文 1～{maxLength} 字；可貼上文字，支援的格式會保留。
       </p>
     </div>
   );

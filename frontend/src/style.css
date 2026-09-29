@@ -49,6 +49,21 @@
 .announcement-editor {
   margin: 16px 0;
 }
+.announcement-comments {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #dce5d7;
+}
+.comment-card {
+  margin: 12px 0;
+  padding: 14px;
+  background: #f6f8f3;
+  border-radius: 10px;
+  border-left: 3px solid #b6c9bc;
+}
+.comment-form {
+  margin-top: 16px;
+}
 .announcement-editor .tiptap {
   min-height: 170px;
   border: 1px solid #d6dfd8;

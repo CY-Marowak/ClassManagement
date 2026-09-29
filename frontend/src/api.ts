@@ -33,7 +33,7 @@ export type StudentProfile = Student & {
 
 const fieldNames: Record<string, string> = {
   title: "公告標題",
-  body: "公告內文",
+  body: "內文",
   points: "點數",
   student_ids: "學生",
   record_ids: "紀錄",

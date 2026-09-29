@@ -181,7 +181,18 @@ API 入口為 `GET/POST /api/student/mascot/` 及教師 `GET /api/classes/{id}/m
 
 API 為教師 `GET/POST /api/classes/{id}/announcements/`、`POST /api/classes/{id}/announcements/{announcement_id}/` 及學生 `GET /api/student/announcements/`。班級鎖、版本檢查、UUID 與同一交易的操作紀錄保護權限、重試及併發。學生等待鎖期間若登入失效，鎖內再次檢查後拒絕讀取。
 
-測試見 `test_announcements.py`、`test_announcement_transactions.py` 與 `e2e/announcements.spec.ts`；截圖為 `.local/10-editor-desktop.png`、`10-editor-mobile.png`、`10-home-mobile.png`。已讀／未讀、通知及附件不在 v1，留言留待任務 11。
+測試見 `test_announcements.py`、`test_announcement_transactions.py` 與 `e2e/announcements.spec.ts`；截圖為 `.local/10-editor-desktop.png`、`10-editor-mobile.png`、`10-home-mobile.png`。已讀／未讀、通知及附件不在 v1。
+
+## 共同教師公告留言
+
+任務 11：更新環境時套用 0017。每則公告下方顯示「留言（數量）」，預設收合；教師與學生點擊後可閱讀，依發布時間由舊到新排列，每頁 20 則。
+
+- 已批准共同教師可新增留言，並編輯／刪除自己的留言。導師只能刪除留言，不能新增或修改他人文字；學生只讀。被移除教師的舊留言保留，但本人失去本班存取權。
+- 留言 1～1000 字，沿用公告的富文字工具列、斜體顯示與格式錯誤引導；不另設標題，沒有巢狀回覆、附件或通知。編輯保留原發布時間與排序，顯示已編輯時間。
+- 刪除前顯示作者與內容供確認，一般頁面隱藏、保留歷史。公告被刪除時留言一起隱藏並禁止操作；永久刪班才清除留言與操作識別。
+- 連線失敗時保留輸入及操作識別，按「重試這次留言操作」確認結果。收合留言保留本頁草稿；離開公告頁／重新載入網頁會清除暫存，請先確認結果。新留言成功後跳至最後一頁；已完成但清單更新失敗時只需「更新留言」。舊版本或權限衝突須重新載入。
+
+教師 API 為 `/api/classes/{id}/announcements/{announcement_id}/comments/`（GET／POST）與其 `{comment_id}/`（POST edit／delete）；學生 GET `/api/student/announcements/{announcement_id}/comments/`。班級鎖、UUID、revision 與交易保護去重、撤權競爭及回滾；讀取學生留言時重新檢查鎖內 Session。测试見 `test_comments.py`、`test_comment_transactions.py`、`e2e/comments.spec.ts`；截圖 `.local/11-comments-desktop.png` 與 `11-comments-mobile.png`。
 
 ## 驗證指令
 
@@ -214,7 +225,7 @@ API 測試使用獨立的 `test_cm` PostgreSQL 資料庫。瀏覽器測試使用
 
 ## 範圍與實作選擇
 
-- 已實作任務 01、01a、02、03、03a、04、05、06、07、08、09、10；留言依後續任務完成。
+- 已實作任務 01、01a、02、03、03a、04、05、06、07、08、09、10、11。
 - 班級權限繼續以 membership 的 `approved` 判斷；未批准時由 `inactive_status` 區分 pending／rejected／removed。`revision` 防止舊頁面對已變更的身分狀態重新審核。新申請每個教師每 15 分鐘最多 30 次嘗試。
 - 學生登入按班級碼＋學號每 15 分鐘 5 次、IP 每 15 分鐘 30 次限流。改密碼保留目前 Session，舊密碼 Session 失效。
 - 名單匯入、學生資料修改、登入／改密碼／導師重設、刪除學生與刪班共用班級交易鎖；查核事件與資料修改一起保存。重設、刪除學生及刪班共用 Session 撤銷流程，目前逐筆解碼找出目標帳號，成本隨 Session 數量增加；大量使用前應加入可索引的帳號 Session 關聯。

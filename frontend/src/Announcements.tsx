@@ -9,6 +9,7 @@ import {
 import type { JSONContent } from "@tiptap/react";
 import { api, ApiError, type Cohort } from "./api";
 import { AnnouncementContent, emptyDocument } from "./AnnouncementContent";
+import { AnnouncementComments } from "./AnnouncementComments";
 const AnnouncementEditor = lazy(() =>
   import("./AnnouncementEditor").then((module) => ({
     default: module.AnnouncementEditor,
@@ -16,6 +17,7 @@ const AnnouncementEditor = lazy(() =>
 );
 
 type Announcement = {
+  comment_count: number;
   id: number;
   title: string;
   body: JSONContent;
@@ -279,6 +281,10 @@ export function Announcements({
             )}
           </p>
           <AnnouncementContent body={item.body} />
+          <AnnouncementComments
+            endpoint={`${endpoint}${item.id}/comments/`}
+            initialCount={item.comment_count}
+          />
           {editable && (
             <div className="actions">
               <button
