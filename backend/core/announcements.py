@@ -2,6 +2,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -175,5 +176,9 @@ class StudentAnnouncementsView(APIView):
         student = get_object_or_404(Student, user=request.user)
         with transaction.atomic():
             get_object_or_404(Cohort.objects.select_for_update(), pk=student.cohort_id)
-            get_object_or_404(Student, pk=student.pk, must_change_password=False)
+            student = get_object_or_404(Student.objects.select_related("user"), pk=student.pk)
+            if student.must_change_password or (
+                request.session.get("_auth_user_hash") != student.user.get_session_auth_hash()
+            ):
+                raise PermissionDenied("登入已失效，請重新登入並完成密碼修改。")
             return announcement_page(request, student.cohort_id)

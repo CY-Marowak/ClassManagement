@@ -169,6 +169,20 @@ Email 不需要真實存在就能本機試用。正式上線前必須配置 SMTP
 
 API 入口為 `GET/POST /api/student/mascot/` 及教師 `GET /api/classes/{id}/mascot/`；後端依本人 Session 選定學生、驗證首次改密碼，班級鎖與資料庫交易保護扣點、交易及 exp。只使用 `PointTransaction` 保存餵食，不建立 mascotFeedings。測試見 `test_mascots.py`、`test_feeding_transactions.py` 與 `e2e/mascots.spec.ts`；桌面／手機截圖在 `.local/09-*`。
 
+## 導師公告與學生首頁
+
+任務 10：更新環境時套用 0015／0016。教師從班級卡片的「班級公告」進入，導師可新增、編輯、刪除、置頂及取消置頂；已批准共同教師只讀。學生完成首次改密碼後，在首頁先看公告，再看點數與分數。
+
+- 標題 1～100 字，內文文字 1～5000 字。工具列支援粗體、斜體、底線、三種字級、四色、項目／編號清單及清除格式。可選取文字再套用格式；Enter 分段，Shift+Enter 換行。貼上只保留支援的文字格式，不提供圖片、附件或連結。
+- 多則公告可置頂。每頁 10 則，置頂優先，各組依發布時間倒序；編輯保留原排序並顯示已編輯時間。
+- 刪除先確認，學生與一般教師頁面不再顯示，但保留資料；永久刪班才真正清除該班公告與重試識別。
+- 網路回應遺失時，內容會保留並暫停修改，按「重試這次操作」確認原操作，不會重複發布。重試暫存保留至離開公告頁或重新載入網頁；離開後先查看最新公告再決定是否操作。舊版本衝突須捨棄舊操作並重新載入。
+- 已儲存但清單讀取失敗時會明確提示操作已完成，只需重新載入公告。公告內文使用結構化 JSON 白名單與安全元素呈現，不直接注入 HTML。編輯器在教師開啟表單時才載入。
+
+API 為教師 `GET/POST /api/classes/{id}/announcements/`、`POST /api/classes/{id}/announcements/{announcement_id}/` 及學生 `GET /api/student/announcements/`。班級鎖、版本檢查、UUID 與同一交易的操作紀錄保護權限、重試及併發。學生等待鎖期間若登入失效，鎖內再次檢查後拒絕讀取。
+
+測試見 `test_announcements.py`、`test_announcement_transactions.py` 與 `e2e/announcements.spec.ts`；截圖為 `.local/10-editor-desktop.png`、`10-editor-mobile.png`、`10-home-mobile.png`。已讀／未讀、通知及附件不在 v1，留言留待任務 11。
+
 ## 驗證指令
 
 ```powershell
@@ -200,7 +214,7 @@ API 測試使用獨立的 `test_cm` PostgreSQL 資料庫。瀏覽器測試使用
 
 ## 範圍與實作選擇
 
-- 已實作任務 01、01a、02、03、03a、04、05、06、07、08、09；公告依後續任務完成。
+- 已實作任務 01、01a、02、03、03a、04、05、06、07、08、09、10；留言依後續任務完成。
 - 班級權限繼續以 membership 的 `approved` 判斷；未批准時由 `inactive_status` 區分 pending／rejected／removed。`revision` 防止舊頁面對已變更的身分狀態重新審核。新申請每個教師每 15 分鐘最多 30 次嘗試。
 - 學生登入按班級碼＋學號每 15 分鐘 5 次、IP 每 15 分鐘 30 次限流。改密碼保留目前 Session，舊密碼 Session 失效。
 - 名單匯入、學生資料修改、登入／改密碼／導師重設、刪除學生與刪班共用班級交易鎖；查核事件與資料修改一起保存。重設、刪除學生及刪班共用 Session 撤銷流程，目前逐筆解碼找出目標帳號，成本隨 Session 數量增加；大量使用前應加入可索引的帳號 Session 關聯。

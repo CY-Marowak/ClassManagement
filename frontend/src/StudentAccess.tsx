@@ -3,6 +3,7 @@ import { api, type StudentProfile, type StudentSession } from "./api";
 import { AnimalAvatar } from "./AnimalAvatar";
 import { ScoreHistory } from "./ScoreHistory";
 import { Mascot } from "./Mascot";
+import { Announcements } from "./Announcements";
 
 export function StudentAccess({
   changing = false,
@@ -208,6 +209,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             <h1>{profile.name}</h1>
             <p className="badge">座號 {profile.seat_number}</p>
             <p className="muted">這是你的固定動物夥伴，一起開始班級日常。</p>
+            <Announcements />
             <section className="student-points" aria-label="我的點數">
               <p>
                 可用點數 <strong>{profile.point_balance}</strong>

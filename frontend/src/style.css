@@ -6,6 +6,103 @@
   line-height: 1.6;
   font-weight: 400;
 }
+.announcements {
+  text-align: left;
+  margin: 28px 0;
+  min-width: 0;
+}
+.announcements .page-title,
+.announcements .actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.announcement-card,
+.announcement-form {
+  background: #fff;
+  border: 1px solid #dce5d7;
+  border-radius: 14px;
+  padding: 22px;
+  margin: 16px 0;
+  overflow-wrap: anywhere;
+}
+.announcement-card h3 {
+  margin: 10px 0;
+}
+.announcement-body,
+.announcement-editor .tiptap {
+  color: #183b36;
+  font-size: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.announcement-body p,
+.announcement-editor .tiptap p {
+  margin: 0 0 10px;
+}
+.announcement-body ul,
+.announcement-body ol,
+.announcement-editor ul,
+.announcement-editor ol {
+  padding-left: 28px;
+}
+.announcement-editor {
+  margin: 16px 0;
+}
+.announcement-editor .tiptap {
+  min-height: 170px;
+  border: 1px solid #d6dfd8;
+  border-radius: 0 0 9px 9px;
+  padding: 16px;
+  background: #fff;
+}
+.announcement-editor .tiptap:focus {
+  outline: 2px solid #477e66;
+}
+.rich-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #d6dfd8;
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+  background: #f0f4e9;
+  min-width: 0;
+}
+.rich-toolbar button {
+  background: white;
+  color: #183b36;
+  border: 1px solid #b6c9bc;
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+.rich-toolbar button[aria-pressed="true"] {
+  background: #183b36;
+  color: white;
+}
+.rich-toolbar label {
+  font-size: 12px;
+  margin: 0;
+}
+.rich-toolbar select {
+  width: auto;
+  padding: 6px 8px;
+  margin: 0 0 0 6px;
+}
+.announcement-form > label {
+  display: block;
+}
+@media (max-width: 600px) {
+  .announcement-card,
+  .announcement-form {
+    padding: 14px;
+  }
+  .rich-toolbar {
+    padding: 8px;
+  }
+}
 textarea {
   font: inherit;
   width: 100%;

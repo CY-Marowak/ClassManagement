@@ -6,6 +6,7 @@ import { TeacherManagement } from "./TeacherManagement";
 import { ScoreWorkspace } from "./ScoreWorkspace";
 import { PointAwards } from "./PointAwards";
 import { Mascot } from "./Mascot";
+import { Announcements } from "./Announcements";
 
 function ClassForm({
   cohort,
@@ -232,6 +233,7 @@ export function Classroom({
   const [scores, setScores] = useState<Cohort | null>(null);
   const [awards, setAwards] = useState<Cohort | null>(null);
   const [mascot, setMascot] = useState<Cohort | null>(null);
+  const [announcements, setAnnouncements] = useState<Cohort | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Cohort | "new" | null>(null);
   const [deleting, setDeleting] = useState<Cohort | null>(null);
@@ -273,6 +275,7 @@ export function Classroom({
               setScores(null);
               setAwards(null);
               setMascot(null);
+              setAnnouncements(null);
             }}
           >
             ▦ <span>我的班級</span>
@@ -299,7 +302,13 @@ export function Classroom({
         </div>
       </aside>
       <main className="workspace-main">
-        {mascot ? (
+        {announcements ? (
+          <Announcements
+            key={announcements.id}
+            cohort={announcements}
+            onBack={() => setAnnouncements(null)}
+          />
+        ) : mascot ? (
           <Mascot
             key={mascot.id}
             cohortId={mascot.id}
@@ -463,6 +472,12 @@ export function Classroom({
                       </span>
                     </div>
                     <h2>{c.name}</h2>
+                    <button
+                      className="secondary full"
+                      onClick={() => setAnnouncements(c)}
+                    >
+                      班級公告
+                    </button>
                     <button
                       className="primary full"
                       onClick={() => setScores(c)}
