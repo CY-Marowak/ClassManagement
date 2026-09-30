@@ -51,6 +51,15 @@ test("homeroom dashboard keeps import tasks and opens their work directly", asyn
   await page.getByRole("button", { name: /待修正學生/ }).click();
   const first = page.locator(".import-issue").first();
   await first.getByRole("button", { name: "修正這列" }).click();
+  await first.getByLabel("學號", { exact: true }).fill("001");
+  await first.getByRole("button", { name: "修正並重試" }).click();
+  await expect(page.getByRole("alert")).toContainText("學號已存在");
+  await page.getByRole("button", { name: "重新整理待修正名單" }).click();
+  await first.getByRole("button", { name: "修正這列" }).click();
+  await expect(first.getByLabel("學號", { exact: true })).toHaveValue("001");
+  await expect(first.getByText("原始資料：", { exact: false })).toHaveText(
+    "原始資料：2 │ 小美",
+  );
   await first.getByLabel("學號", { exact: true }).fill("002");
   await first.getByRole("button", { name: "修正並重試" }).click();
   await expect(page.locator(".import-issue")).toHaveCount(1);

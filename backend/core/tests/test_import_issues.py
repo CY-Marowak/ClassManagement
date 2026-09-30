@@ -37,6 +37,10 @@ class ImportIssueTests(APITestCase):
         ).json()
         self.assertEqual(result["status"], "pending")
         self.assertIn("學號已存在", result["message"])
+        persisted = self.client.get(self.base + "import-issues/").json()["results"][0]
+        self.assertEqual(persisted["raw"], "2\t缺欄")
+        self.assertEqual(persisted["draft_raw"], "1\t小美\t002")
+        self.assertEqual(persisted["batch_id"], first["batch_id"])
         self.assertEqual(
             self.client.post(
                 url,
@@ -51,6 +55,8 @@ class ImportIssueTests(APITestCase):
         result = self.client.post(url, payload)
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.json()["status"], "resolved")
+        self.assertEqual(result.json()["raw"], "")
+        self.assertEqual(result.json()["draft_raw"], "")
         # A lost response can safely be retried: it never creates another student.
         self.assertEqual(self.client.post(url, payload).status_code, 200)
         self.assertEqual(len(self.client.get(self.base + "students/").json()), 2)
@@ -103,7 +109,10 @@ class ImportIssueTests(APITestCase):
         self.assertEqual(
             self.client.post(other_base + f"import-issues/{issue['id']}/", payload).status_code, 404
         )
-        self.assertEqual(self.client.post(url, payload).json()["status"], "ignored")
+        ignored = self.client.post(url, payload).json()
+        self.assertEqual(ignored["status"], "ignored")
+        self.assertEqual(ignored["raw"], "")
+        self.assertEqual(ignored["draft_raw"], "")
         self.assertEqual(self.client.get(self.base + "import-issues/").json()["count"], 25)
         response = self.client.delete(self.base, {"confirmation_name": "匯入班"})
         self.assertEqual(response.status_code, 200)

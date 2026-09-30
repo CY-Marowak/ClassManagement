@@ -150,6 +150,7 @@ class StudentImportIssue(models.Model):
     batch_id = models.UUIDField()
     line = models.PositiveIntegerField()
     raw = models.TextField(blank=True)
+    draft_raw = models.TextField(blank=True)
     message = models.TextField(blank=True)
     status = models.CharField(
         max_length=10,

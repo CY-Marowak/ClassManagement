@@ -17,6 +17,7 @@ def issue_data(issue):
         "batch_id": str(issue.batch_id),
         "line": issue.line,
         "raw": issue.raw,
+        "draft_raw": issue.draft_raw,
         "message": issue.message,
         "status": issue.status,
         "revision": issue.revision,
@@ -73,13 +74,14 @@ class ResolveImportIssueView(APIView):
                 issue.status = "ignored"
             else:
                 result = import_student_row(cohort, request.user, issue.line, values["raw"])
-                issue.raw = values["raw"]
+                issue.draft_raw = values["raw"]
                 issue.message = result["message"]
                 if result["status"] in ("created", "skipped"):
                     issue.status = "resolved"
             if issue.status != "pending":
                 # Do not retain a second copy of a student's personal data after resolution.
                 issue.raw = ""
+                issue.draft_raw = ""
                 issue.message = ""
             issue.revision += 1
             issue.save()

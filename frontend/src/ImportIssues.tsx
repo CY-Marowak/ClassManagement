@@ -6,6 +6,7 @@ type Issue = {
   batch_id: string;
   line: number;
   raw: string;
+  draft_raw: string;
   message: string;
   status: "pending" | "resolved" | "ignored";
   revision: number;
@@ -161,6 +162,11 @@ export function ImportIssues({
               <p className="import-raw">
                 原始資料：{issue.raw.replaceAll("\t", " │ ")}
               </p>
+              {issue.draft_raw && (
+                <p className="import-raw">
+                  上次修正：{issue.draft_raw.replaceAll("\t", " │ ")}
+                </p>
+              )}
               <p>{issue.message}</p>
               {editing?.id === issue.id ? (
                 <form
@@ -231,7 +237,7 @@ export function ImportIssues({
                     onClick={() => {
                       setEditing(issue);
                       setIgnoring(null);
-                      const parts = issue.raw.split("\t");
+                      const parts = (issue.draft_raw || issue.raw).split("\t");
                       setCells(
                         parts.length <= 3
                           ? [parts[0] || "", parts[1] || "", parts[2] || ""]
