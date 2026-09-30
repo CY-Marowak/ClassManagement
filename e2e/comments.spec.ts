@@ -142,6 +142,30 @@ test("co-teacher comments, student reads and homeroom moderates without authorin
   await expect(owner.getByRole("textbox", { name: "留言內文" })).toHaveCount(0);
   await expect(owner.getByRole("button", { name: "編輯留言" })).toHaveCount(0);
   await owner.getByRole("button", { name: "刪除留言", exact: true }).click();
+  let releaseRefresh!: () => void;
+  const refreshGate = new Promise<void>((resolve) => {
+    releaseRefresh = resolve;
+  });
+  await owner.route(
+    `**${path}?page=1`,
+    async (route) => {
+      const response = await route.fetch();
+      await refreshGate;
+      await route.fulfill({ response });
+    },
+    { times: 1 },
+  );
+  await owner.getByRole("button", { name: "更新留言", exact: true }).click();
+  try {
+    await expect(
+      owner.getByRole("button", { name: "確認刪除留言", exact: true }),
+    ).toBeDisabled();
+  } finally {
+    releaseRefresh();
+  }
+  await expect(owner.getByText("正在載入留言…", { exact: true })).toHaveCount(
+    0,
+  );
   await owner
     .getByRole("button", { name: "確認刪除留言", exact: true })
     .click();
@@ -207,6 +231,39 @@ test("co-teacher comments, student reads and homeroom moderates without authorin
   ).toHaveCount(0);
   await page.getByRole("button", { name: "更新留言", exact: true }).click();
   await expect(page.locator(".comment-card")).toHaveCount(1);
+  await page.getByRole("button", { name: "編輯留言", exact: true }).click();
+  await editor.fill("尚未送出的草稿");
+  await page.route(`**${path}?page=2`, (route) => route.abort("failed"), {
+    times: 1,
+  });
+  await page.getByRole("button", { name: "更新留言", exact: true }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(editor).toContainText("尚未送出的草稿");
+  const latestMembers = await (
+    await owner.request.get(`/api${base}teachers/`)
+  ).json();
+  await post(owner, base + `teachers/${members[0].id}/`, {
+    action: "remove",
+    revision: latestMembers.members[0].revision,
+  });
+  await page.getByRole("button", { name: "更新留言", exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.locator(".comment-card")).toHaveCount(0);
+  await owner.getByRole("button", { name: "更新留言", exact: true }).click();
+  await owner
+    .getByRole("button", { name: "刪除留言", exact: true })
+    .first()
+    .click();
+  await post(owner, base + `announcements/${announcement.id}/`, {
+    action: "delete",
+    revision: announcement.revision,
+    request_id: crypto.randomUUID(),
+  });
+  await owner.getByRole("button", { name: "更新留言", exact: true }).click();
+  await expect(
+    owner.getByRole("alertdialog", { name: "刪除留言確認" }),
+  ).toHaveCount(0);
+  await expect(owner.locator(".comment-card")).toHaveCount(0);
   await studentContext.close();
   await ownerContext.close();
 });

@@ -78,6 +78,11 @@ export function AnnouncementComments({
       }
     } catch (e) {
       setData(null);
+      if (e instanceof ApiError && [403, 404].includes(e.status ?? 0)) {
+        clearDraft();
+        pending.current = null;
+        setRetry(false);
+      }
       setError(e instanceof Error ? e.message : "無法讀取留言。");
     } finally {
       setLoading(false);
@@ -92,7 +97,7 @@ export function AnnouncementComments({
   async function mutate(
     operation?: Omit<Pending, "values"> & { values: Record<string, unknown> },
   ) {
-    if (busy || conflict) return;
+    if (busy || loading || conflict) return;
     if (!pending.current && operation)
       pending.current = {
         ...operation,
@@ -247,7 +252,7 @@ export function AnnouncementComments({
               <div className="actions">
                 <button
                   className="danger-button"
-                  disabled={locked}
+                  disabled={locked || loading}
                   onClick={() =>
                     mutate({
                       path: `${endpoint}${deleting.id}/`,
