@@ -5,27 +5,49 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0017_announcement_comments'),
+        ("core", "0017_announcement_comments"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='StudentImportIssue',
+            name="StudentImportIssue",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('batch_id', models.UUIDField()),
-                ('line', models.PositiveIntegerField()),
-                ('raw', models.TextField(blank=True)),
-                ('message', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('pending', '待修正'), ('resolved', '已完成'), ('ignored', '已忽略')], default='pending', max_length=10)),
-                ('revision', models.PositiveIntegerField(default=1)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('cohort', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.cohort')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("batch_id", models.UUIDField()),
+                ("line", models.PositiveIntegerField()),
+                ("raw", models.TextField(blank=True)),
+                ("message", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "待修正"),
+                            ("resolved", "已完成"),
+                            ("ignored", "已忽略"),
+                        ],
+                        default="pending",
+                        max_length=10,
+                    ),
+                ),
+                ("revision", models.PositiveIntegerField(default=1)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "cohort",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="core.cohort"
+                    ),
+                ),
             ],
             options={
-                'indexes': [models.Index(fields=['cohort', 'status'], name='core_studen_cohort__0c19f2_idx')],
+                "indexes": [
+                    models.Index(fields=["cohort", "status"], name="core_studen_cohort__0c19f2_idx")
+                ],
             },
         ),
     ]
