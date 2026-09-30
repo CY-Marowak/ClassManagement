@@ -19,9 +19,11 @@ type AwardPage = {
 export function PointAwards({
   cohort,
   onBack,
+  backLabel = "← 返回我的班級",
 }: {
   cohort: Cohort;
   onBack: () => void;
+  backLabel?: string;
 }) {
   const [data, setData] = useState<AwardPage | null>(null);
   const [status, setStatus] = useState("pending");
@@ -125,7 +127,7 @@ export function PointAwards({
   return (
     <>
       <button className="text-button" disabled={busy} onClick={onBack}>
-        ← 返回我的班級
+        {backLabel}
       </button>
       <header>
         <p className="eyebrow">{cohort.name} / 教學獎勵</p>

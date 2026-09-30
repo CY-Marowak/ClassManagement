@@ -1,4 +1,5 @@
 import secrets
+import uuid
 
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.password_validation import validate_password
@@ -10,7 +11,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ClassMember, Cohort, Student, StudentAuditEvent, User
+from .models import ClassMember, Cohort, Student, StudentAuditEvent, StudentImportIssue, User
 from .permissions import IsReadyUser, IsStudent, IsTeacher
 from .throttling import consume
 from .views import PublicAuthView, user_data
@@ -34,6 +35,62 @@ class StudentRowSerializer(serializers.Serializer):
     seat_number = serializers.IntegerField(min_value=1, max_value=9999)
     name = serializers.CharField(max_length=80)
     student_number = serializers.RegexField(r"^\S{1,64}$", max_length=64)
+
+
+def import_student_row(cohort, actor, number, line):
+    cells = [c.strip() for c in line.split("\t")]
+    result = {
+        "line": number,
+        "status": "error",
+        "message": "",
+        "cells": cells,
+        "raw": line,
+    }
+    if len(cells) != 3:
+        result["message"] = "需要座號、姓名、學號三欄，請從表格複製，以 Tab 分隔。"
+    else:
+        row = StudentRowSerializer(data=dict(zip(["seat_number", "name", "student_number"], cells)))
+        if not row.is_valid():
+            labels = {"seat_number": "座號", "name": "姓名", "student_number": "學號"}
+            result["message"] = "；".join(
+                f"{labels[k]}：{' '.join(v)}" for k, v in row.errors.items()
+            )
+        else:
+            values = row.validated_data
+            existing = (
+                Student.objects.filter(cohort=cohort, student_number=values["student_number"])
+                .select_related("user")
+                .first()
+            )
+            if existing:
+                if (
+                    existing.seat_number == values["seat_number"]
+                    and existing.user.display_name == values["name"]
+                ):
+                    result.update(status="skipped", message="已存在，略過。")
+                else:
+                    result["message"] = "學號已存在，但姓名或座號不同；請確認資料。"
+            elif Student.objects.filter(cohort=cohort, seat_number=values["seat_number"]).exists():
+                result["message"] = "座號已被其他學生使用。"
+            else:
+                user = User(account_type="student", email=None, display_name=values["name"])
+                user.set_password(values["student_number"])
+                user.save()
+                student = Student.objects.create(
+                    cohort=cohort,
+                    user=user,
+                    seat_number=values["seat_number"],
+                    student_number=values["student_number"],
+                    avatar=secrets.choice(["cat", "dog", "rabbit"]),
+                )
+                StudentAuditEvent.objects.create(
+                    student=student,
+                    actor=actor,
+                    actor_name=actor.display_name,
+                    student_name=user.display_name,
+                )
+                result.update(status="created", message="已建立。")
+    return result
 
 
 class StudentsView(APIView):
@@ -60,6 +117,7 @@ class StudentsView(APIView):
         if not lines or len(lines) > 200:
             raise serializers.ValidationError({"text": "請貼上 1–200 筆學生資料。"})
         results = []
+        batch_id = uuid.uuid4()
         with transaction.atomic():
             get_object_or_404(
                 ClassMember.objects.select_for_update(),
@@ -70,66 +128,15 @@ class StudentsView(APIView):
             )
             cohort = get_object_or_404(Cohort.objects.select_for_update(), pk=pk)
             for number, line in lines:
-                cells = [c.strip() for c in line.split("\t")]
-                result = {
-                    "line": number,
-                    "status": "error",
-                    "message": "",
-                    "cells": cells,
-                    "raw": line,
-                }
-                if len(cells) != 3:
-                    result["message"] = "需要座號、姓名、學號三欄，請從表格複製，以 Tab 分隔。"
-                else:
-                    row = StudentRowSerializer(
-                        data=dict(zip(["seat_number", "name", "student_number"], cells))
+                result = import_student_row(cohort, request.user, number, line)
+                if result["status"] == "error":
+                    StudentImportIssue.objects.create(
+                        cohort=cohort,
+                        batch_id=batch_id,
+                        line=number,
+                        raw=line,
+                        message=result["message"],
                     )
-                    if not row.is_valid():
-                        labels = {"seat_number": "座號", "name": "姓名", "student_number": "學號"}
-                        result["message"] = "；".join(
-                            f"{labels[k]}：{' '.join(v)}" for k, v in row.errors.items()
-                        )
-                    else:
-                        values = row.validated_data
-                        existing = (
-                            Student.objects.filter(
-                                cohort=cohort, student_number=values["student_number"]
-                            )
-                            .select_related("user")
-                            .first()
-                        )
-                        if existing:
-                            if (
-                                existing.seat_number == values["seat_number"]
-                                and existing.user.display_name == values["name"]
-                            ):
-                                result.update(status="skipped", message="已存在，略過。")
-                            else:
-                                result["message"] = "學號已存在，但姓名或座號不同；請確認資料。"
-                        elif Student.objects.filter(
-                            cohort=cohort, seat_number=values["seat_number"]
-                        ).exists():
-                            result["message"] = "座號已被其他學生使用。"
-                        else:
-                            user = User(
-                                account_type="student", email=None, display_name=values["name"]
-                            )
-                            user.set_password(values["student_number"])
-                            user.save()
-                            student = Student.objects.create(
-                                cohort=cohort,
-                                user=user,
-                                seat_number=values["seat_number"],
-                                student_number=values["student_number"],
-                                avatar=secrets.choice(["cat", "dog", "rabbit"]),
-                            )
-                            StudentAuditEvent.objects.create(
-                                student=student,
-                                actor=request.user,
-                                actor_name=request.user.display_name,
-                                student_name=user.display_name,
-                            )
-                            result.update(status="created", message="已建立。")
                 results.append(result)
         return Response(
             {

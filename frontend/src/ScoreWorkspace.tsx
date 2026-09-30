@@ -14,9 +14,13 @@ type ScoreRoster = {
 export function ScoreWorkspace({
   cohort,
   onBack,
+  backLabel = "← 返回我的班級",
+  initialView = "entry",
 }: {
   cohort: Cohort;
   onBack: () => void;
+  backLabel?: string;
+  initialView?: "entry" | "history" | "pending";
 }) {
   const [roster, setRoster] = useState<ScoreRoster | null>(null);
   const [studentId, setStudentId] = useState("");
@@ -27,7 +31,9 @@ export function ScoreWorkspace({
   const [template, setTemplate] = useState("participation");
   const [note, setNote] = useState("");
   const [filter, setFilter] = useState("");
-  const [view, setView] = useState<"entry" | "history" | "pending">("entry");
+  const [view, setView] = useState<"entry" | "history" | "pending">(
+    initialView,
+  );
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -130,7 +136,7 @@ export function ScoreWorkspace({
   return (
     <>
       <button className="text-button" disabled={busy} onClick={onBack}>
-        ← 返回我的班級
+        {backLabel}
       </button>
       <header>
         <p className="eyebrow">{cohort.name} / 教學紀錄</p>

@@ -9,9 +9,11 @@ type Management = { application_code: string; members: Member[] };
 export function TeacherManagement({
   cohort,
   onBack,
+  backLabel = "← 返回我的班級",
 }: {
   cohort: Cohort;
   onBack: () => void;
+  backLabel?: string;
 }) {
   const [data, setData] = useState<Management | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,7 +67,7 @@ export function TeacherManagement({
   return (
     <>
       <button className="text-button" onClick={onBack} disabled={busy}>
-        ← 返回我的班級
+        {backLabel}
       </button>
       <header className="page-title">
         <div>

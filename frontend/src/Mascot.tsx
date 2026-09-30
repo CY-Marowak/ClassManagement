@@ -42,11 +42,13 @@ export function Mascot({
   cohortId,
   studentId,
   onBack,
+  backLabel = "← 返回班級",
   onBalance,
 }: {
   cohortId: number;
   studentId?: number;
   onBack: () => void;
+  backLabel?: string;
   onBalance?: (balance: number) => void;
 }) {
   const [mascot, setMascot] = useState<MascotState | null>(null);
@@ -177,7 +179,7 @@ export function Mascot({
     <section className="mascot-page" aria-label="班級吉祥物">
       <div className="page-title">
         <button className="text-button" disabled={busy} onClick={onBack}>
-          {studentId ? "返回我的頁面" : "← 返回班級"}
+          {studentId ? "返回我的頁面" : backLabel}
         </button>
         <button
           className="secondary"

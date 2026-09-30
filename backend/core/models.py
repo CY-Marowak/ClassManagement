@@ -145,6 +145,24 @@ class Student(models.Model):
         ]
 
 
+class StudentImportIssue(models.Model):
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+    batch_id = models.UUIDField()
+    line = models.PositiveIntegerField()
+    raw = models.TextField(blank=True)
+    message = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=10,
+        default="pending",
+        choices=[("pending", "待修正"), ("resolved", "已完成"), ("ignored", "已忽略")],
+    )
+    revision = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["cohort", "status"])]
+
+
 class StudentAuditEvent(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="audit_events")
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

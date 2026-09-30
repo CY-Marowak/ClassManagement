@@ -4,6 +4,8 @@ from core.awards import PointAwardsView
 from core.batch_scores import PendingReasonsView, ScoreBatchesView
 from core.cohorts import ClassDetailView, ClassesView
 from core.comments import CommentChangeView, CommentsView, StudentCommentsView
+from core.dashboard import DashboardView
+from core.import_issues import ImportIssuesView, ResolveImportIssueView
 from core.mascots import ClassMascotView, StudentMascotView
 from core.memberships import (
     TeacherApplicationsView,
@@ -19,6 +21,9 @@ from core.students import StudentLoginView, StudentMeView, StudentPasswordView, 
 from django.urls import path
 
 urlpatterns = [
+    path("api/classes/<int:pk>/import-issues/", ImportIssuesView.as_view()),
+    path("api/classes/<int:pk>/import-issues/<int:issue_id>/", ResolveImportIssueView.as_view()),
+    path("api/classes/<int:pk>/dashboard/", DashboardView.as_view()),
     path(
         "api/classes/<int:pk>/announcements/<int:announcement_id>/comments/<int:comment_id>/",
         CommentChangeView.as_view(),

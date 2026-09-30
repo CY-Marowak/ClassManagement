@@ -20,9 +20,11 @@ const statuses = { created: "新增", skipped: "略過", error: "待修正" };
 export function StudentRoster({
   cohort,
   onBack,
+  onImports,
 }: {
   cohort: Cohort;
   onBack: () => void;
+  onImports: () => void;
 }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,6 +134,15 @@ export function StudentRoster({
           {error}
         </p>
       )}
+      <section className="roster-panel">
+        <h2>匯入待辦</h2>
+        <p className="muted small">
+          匯入錯誤會保存，離開頁面後仍可逐列修正或忽略。
+        </p>
+        <button className="secondary" disabled={busy} onClick={onImports}>
+          處理待修正學生
+        </button>
+      </section>
       <section className="roster-panel">
         <h2>邀請學生登入</h2>
         <p>

@@ -39,9 +39,11 @@ type Operation = { path: string; values: Record<string, unknown> };
 export function Announcements({
   cohort,
   onBack,
+  backLabel = "返回班級",
 }: {
   cohort?: Cohort;
   onBack?: () => void;
+  backLabel?: string;
 }) {
   const endpoint = cohort
     ? `/classes/${cohort.id}/announcements/`
@@ -130,7 +132,7 @@ export function Announcements({
         </div>
         {onBack && (
           <button className="text-button" onClick={onBack} disabled={busy}>
-            返回班級
+            {backLabel}
           </button>
         )}
       </header>

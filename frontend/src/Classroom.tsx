@@ -7,6 +7,11 @@ import { ScoreWorkspace } from "./ScoreWorkspace";
 import { PointAwards } from "./PointAwards";
 import { Mascot } from "./Mascot";
 import { Announcements } from "./Announcements";
+import {
+  TeacherDashboard,
+  type DashboardDestination,
+} from "./TeacherDashboard";
+import { ImportIssues } from "./ImportIssues";
 
 function ClassForm({
   cohort,
@@ -234,6 +239,11 @@ export function Classroom({
   const [awards, setAwards] = useState<Cohort | null>(null);
   const [mascot, setMascot] = useState<Cohort | null>(null);
   const [announcements, setAnnouncements] = useState<Cohort | null>(null);
+  const [dashboard, setDashboard] = useState<Cohort | null>(null);
+  const [imports, setImports] = useState<Cohort | null>(null);
+  const [scoreView, setScoreView] = useState<"entry" | "history" | "pending">(
+    "entry",
+  );
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Cohort | "new" | null>(null);
   const [deleting, setDeleting] = useState<Cohort | null>(null);
@@ -276,6 +286,9 @@ export function Classroom({
               setAwards(null);
               setMascot(null);
               setAnnouncements(null);
+              setDashboard(null);
+              setImports(null);
+              setScoreView("entry");
             }}
           >
             ▦ <span>我的班級</span>
@@ -304,39 +317,72 @@ export function Classroom({
       <main className="workspace-main">
         {announcements ? (
           <Announcements
+            backLabel={dashboard ? "← 返回工作首頁" : undefined}
             key={announcements.id}
             cohort={announcements}
             onBack={() => setAnnouncements(null)}
           />
         ) : mascot ? (
           <Mascot
+            backLabel={dashboard ? "← 返回工作首頁" : undefined}
             key={mascot.id}
             cohortId={mascot.id}
             onBack={() => setMascot(null)}
           />
         ) : awards ? (
           <PointAwards
+            backLabel={dashboard ? "← 返回工作首頁" : undefined}
             key={awards.id}
             cohort={awards}
             onBack={() => setAwards(null)}
           />
         ) : scores ? (
           <ScoreWorkspace
+            backLabel={dashboard ? "← 返回工作首頁" : undefined}
             key={scores.id}
             cohort={scores}
+            initialView={scoreView}
             onBack={() => setScores(null)}
           />
         ) : teachers ? (
           <TeacherManagement
+            backLabel={dashboard ? "← 返回工作首頁" : undefined}
             key={teachers.id}
             cohort={teachers}
             onBack={() => setTeachers(null)}
+          />
+        ) : imports ? (
+          <ImportIssues
+            cohort={imports}
+            backLabel={dashboard ? "← 返回工作首頁" : undefined}
+            onBack={() => setImports(null)}
           />
         ) : roster ? (
           <StudentRoster
             key={roster.id}
             cohort={roster}
+            onImports={() => {
+              setImports(roster);
+              setRoster(null);
+            }}
             onBack={() => setRoster(null)}
+          />
+        ) : dashboard ? (
+          <TeacherDashboard
+            cohort={dashboard}
+            onBack={() => setDashboard(null)}
+            onOpen={(destination: DashboardDestination) => {
+              if (destination === "teachers") setTeachers(dashboard);
+              else if (destination === "imports") setImports(dashboard);
+              else if (destination === "awards") setAwards(dashboard);
+              else if (destination === "announcements")
+                setAnnouncements(dashboard);
+              else if (destination === "mascot") setMascot(dashboard);
+              else {
+                setScoreView(destination);
+                setScores(dashboard);
+              }
+            }}
           />
         ) : (
           <>
@@ -472,6 +518,14 @@ export function Classroom({
                       </span>
                     </div>
                     <h2>{c.name}</h2>
+                    {c.role === "homeroom" && (
+                      <button
+                        className="primary full"
+                        onClick={() => setDashboard(c)}
+                      >
+                        工作首頁
+                      </button>
+                    )}
                     <button
                       className="secondary full"
                       onClick={() => setAnnouncements(c)}
@@ -480,7 +534,10 @@ export function Classroom({
                     </button>
                     <button
                       className="primary full"
-                      onClick={() => setScores(c)}
+                      onClick={() => {
+                        setScoreView("entry");
+                        setScores(c);
+                      }}
                     >
                       記分
                     </button>
