@@ -210,36 +210,41 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             <p className="badge">座號 {profile.seat_number}</p>
             <p className="muted">這是你的固定動物夥伴，一起開始班級日常。</p>
             <Announcements />
-            <section className="student-points" aria-label="我的點數">
-              <p>
-                可用點數 <strong>{profile.point_balance}</strong>
-              </p>
-              <p className="muted small">
-                點數可自由用來餵食，和分數分開計算。
-              </p>
-              <div className="actions">
-                <button className="primary" onClick={() => setFeeding(true)}>
-                  餵食班級吉祥物
-                </button>
-                <button
-                  className="text-button"
-                  disabled={busy}
-                  onClick={async () => {
-                    setBusy(true);
-                    setError("");
-                    try {
-                      setProfile(await api<StudentProfile>("/student/me/"));
-                    } catch (e) {
-                      setError(
-                        e instanceof Error ? e.message : "無法更新點數。",
-                      );
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  更新點數
-                </button>
+            <section aria-label="我的點數">
+              <div className="page-title">
+                <h2>我的點數</h2>
+              </div>
+              <div className="student-points">
+                <p>
+                  可用點數 <strong>{profile.point_balance}</strong>
+                </p>
+                <p className="muted small">
+                  點數可自由用來餵食，和分數分開計算。
+                </p>
+                <div className="actions">
+                  <button className="primary" onClick={() => setFeeding(true)}>
+                    餵食班級吉祥物
+                  </button>
+                  <button
+                    className="text-button"
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      setError("");
+                      try {
+                        setProfile(await api<StudentProfile>("/student/me/"));
+                      } catch (e) {
+                        setError(
+                          e instanceof Error ? e.message : "無法更新點數。",
+                        );
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    更新點數
+                  </button>
+                </div>
               </div>
             </section>
             <ScoreHistory endpoint="/student/scores/" />

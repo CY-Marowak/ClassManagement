@@ -5,6 +5,7 @@ import { TeacherApplications } from "./TeacherApplications";
 import { TeacherManagement } from "./TeacherManagement";
 import { ScoreWorkspace } from "./ScoreWorkspace";
 import { PointAwards } from "./PointAwards";
+import { Mascot } from "./Mascot";
 import { Announcements } from "./Announcements";
 import {
   TeacherDashboard,
@@ -236,6 +237,7 @@ export function Classroom({
   const [teachers, setTeachers] = useState<Cohort | null>(null);
   const [scores, setScores] = useState<Cohort | null>(null);
   const [awards, setAwards] = useState<Cohort | null>(null);
+  const [mascot, setMascot] = useState<Cohort | null>(null);
   const [announcements, setAnnouncements] = useState<Cohort | null>(null);
   const [dashboard, setDashboard] = useState<Cohort | null>(null);
   const [imports, setImports] = useState<Cohort | null>(null);
@@ -282,6 +284,7 @@ export function Classroom({
               setTeachers(null);
               setScores(null);
               setAwards(null);
+              setMascot(null);
               setAnnouncements(null);
               setDashboard(null);
               setImports(null);
@@ -318,6 +321,13 @@ export function Classroom({
             key={announcements.id}
             cohort={announcements}
             onBack={() => setAnnouncements(null)}
+          />
+        ) : mascot ? (
+          <Mascot
+            backLabel="← 返回工作首頁"
+            key={mascot.id}
+            cohortId={mascot.id}
+            onBack={() => setMascot(null)}
           />
         ) : awards ? (
           <PointAwards
@@ -365,6 +375,7 @@ export function Classroom({
               if (destination === "teachers") setTeachers(dashboard);
               else if (destination === "imports") setImports(dashboard);
               else if (destination === "awards") setAwards(dashboard);
+              else if (destination === "mascot") setMascot(dashboard);
               else if (destination === "announcements")
                 setAnnouncements(dashboard);
               else {
@@ -516,7 +527,11 @@ export function Classroom({
                       </button>
                     )}
                     <button
-                      className="primary full"
+                      className={
+                        c.role === "homeroom"
+                          ? "secondary full"
+                          : "primary full"
+                      }
                       onClick={() => {
                         setScoreView("entry");
                         setScores(c);

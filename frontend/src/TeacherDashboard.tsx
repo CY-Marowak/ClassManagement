@@ -17,7 +17,8 @@ export type DashboardDestination =
   | "history"
   | "entry"
   | "awards"
-  | "announcements";
+  | "announcements"
+  | "mascot";
 
 export function TeacherDashboard({
   cohort,
@@ -121,6 +122,9 @@ export function TeacherDashboard({
               onClick={() => onOpen("announcements")}
             >
               班級公告
+            </button>
+            <button className="secondary" onClick={() => onOpen("mascot")}>
+              班級吉祥物
             </button>
           </div>
           <section className="roster-panel" aria-label="最近十筆記分">
