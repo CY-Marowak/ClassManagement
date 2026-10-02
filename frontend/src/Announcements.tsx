@@ -40,7 +40,7 @@ type Operation = { path: string; values: Record<string, unknown> };
 export function Announcements({
   cohort,
   onBack,
-  backLabel = "返回班級",
+    backLabel = "← 返回班級",
 }: {
   cohort?: Cohort;
   onBack?: () => void;
@@ -127,11 +127,16 @@ export function Announcements({
     }
   }
   return (
-    <section className="announcements" aria-label="班級公告">
-      <header className="page-title">
+      <section className="announcements" aria-label="班級公告">
+          {onBack && (
+              <button className="text-button" onClick={onBack} disabled={busy}>
+                  {backLabel}
+              </button>
+          )}
+        <header className="page-title">
         <div>
           <p className="eyebrow">{cohort?.name || "班級日常"}</p>
-          <h2>班級公告</h2>
+          <h1>班級公告</h1>
           {!cohort && data && (
             <p className="muted small">共 {data.count} 則公告</p>
           )}
@@ -144,11 +149,6 @@ export function Announcements({
             onClick={() => setCollapsed((value) => !value)}
           >
             {collapsed ? "全部展開" : "全部收合"}
-          </button>
-        )}
-        {onBack && (
-          <button className="text-button" onClick={onBack} disabled={busy}>
-            {backLabel}
           </button>
         )}
       </header>

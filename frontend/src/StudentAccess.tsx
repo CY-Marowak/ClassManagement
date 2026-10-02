@@ -212,7 +212,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             <Announcements />
             <section aria-label="我的點數">
               <div className="page-title">
-                <h2>我的點數</h2>
+                <h1>我的點數</h1>
               </div>
               <div className="student-points">
                 <p>

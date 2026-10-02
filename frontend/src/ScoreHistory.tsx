@@ -77,7 +77,7 @@ export function ScoreHistory({
       aria-label={teacher ? "分數紀錄" : "我的分數"}
     >
       <div className="page-title">
-        <h2>{teacher ? "分數紀錄" : "我的分數"}</h2>
+        {teacher ? <h2>分數紀錄</h2> : <h1>我的分數</h1>}
         <button
           className="text-button"
           disabled={loading}
