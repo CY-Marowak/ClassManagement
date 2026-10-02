@@ -5,7 +5,6 @@ import { TeacherApplications } from "./TeacherApplications";
 import { TeacherManagement } from "./TeacherManagement";
 import { ScoreWorkspace } from "./ScoreWorkspace";
 import { PointAwards } from "./PointAwards";
-import { Mascot } from "./Mascot";
 import { Announcements } from "./Announcements";
 import {
   TeacherDashboard,
@@ -237,7 +236,6 @@ export function Classroom({
   const [teachers, setTeachers] = useState<Cohort | null>(null);
   const [scores, setScores] = useState<Cohort | null>(null);
   const [awards, setAwards] = useState<Cohort | null>(null);
-  const [mascot, setMascot] = useState<Cohort | null>(null);
   const [announcements, setAnnouncements] = useState<Cohort | null>(null);
   const [dashboard, setDashboard] = useState<Cohort | null>(null);
   const [imports, setImports] = useState<Cohort | null>(null);
@@ -284,7 +282,6 @@ export function Classroom({
               setTeachers(null);
               setScores(null);
               setAwards(null);
-              setMascot(null);
               setAnnouncements(null);
               setDashboard(null);
               setImports(null);
@@ -321,13 +318,6 @@ export function Classroom({
             key={announcements.id}
             cohort={announcements}
             onBack={() => setAnnouncements(null)}
-          />
-        ) : mascot ? (
-          <Mascot
-            backLabel={dashboard ? "← 返回工作首頁" : undefined}
-            key={mascot.id}
-            cohortId={mascot.id}
-            onBack={() => setMascot(null)}
           />
         ) : awards ? (
           <PointAwards
@@ -377,7 +367,6 @@ export function Classroom({
               else if (destination === "awards") setAwards(dashboard);
               else if (destination === "announcements")
                 setAnnouncements(dashboard);
-              else if (destination === "mascot") setMascot(dashboard);
               else {
                 setScoreView(destination);
                 setScores(dashboard);
@@ -527,12 +516,6 @@ export function Classroom({
                       </button>
                     )}
                     <button
-                      className="secondary full"
-                      onClick={() => setAnnouncements(c)}
-                    >
-                      班級公告
-                    </button>
-                    <button
                       className="primary full"
                       onClick={() => {
                         setScoreView("entry");
@@ -543,15 +526,15 @@ export function Classroom({
                     </button>
                     <button
                       className="secondary full"
-                      onClick={() => setAwards(c)}
+                      onClick={() => setAnnouncements(c)}
                     >
-                      發點數
+                      班級公告
                     </button>
                     <button
                       className="secondary full"
-                      onClick={() => setMascot(c)}
+                      onClick={() => setAwards(c)}
                     >
-                      班級吉祥物
+                      發點數
                     </button>
                     <p className="muted">
                       {c.entry_year} 年入學 · 同一屆，一起成長

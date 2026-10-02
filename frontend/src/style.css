@@ -1303,6 +1303,13 @@ button.dashboard-tile:hover {
 .dashboard-actions {
   margin-bottom: 24px;
 }
+.dashboard-history-link {
+  font-size: 1.05rem;
+}
+.dashboard-history-header {
+  flex-wrap: wrap;
+  gap: 12px;
+}
 .dashboard-records {
   list-style: none;
   margin: 0;

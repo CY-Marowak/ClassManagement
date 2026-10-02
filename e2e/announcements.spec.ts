@@ -135,6 +135,32 @@ test("homeroom publishes rich text and student reads announcement before points"
       ),
   ).toBe(true);
   await student.setViewportSize({ width: 390, height: 844 });
+  const announcements = student.getByRole("region", {
+    name: "班級公告",
+    exact: true,
+  });
+  await announcements
+    .getByRole("button", { name: "全部收合", exact: true })
+    .click();
+  await expect(
+    announcements.getByRole("button", { name: "全部展開", exact: true }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await expect(student.locator(".announcement-card")).toBeHidden();
+  await expect(
+    student.getByRole("region", { name: "我的點數", exact: true }),
+  ).toBeVisible();
+  await expect(student.locator(".score-total")).toBeVisible();
+  await student.screenshot({
+    path: ".local/12-announcements-collapsed-mobile.png",
+    fullPage: true,
+  });
+  await announcements
+    .getByRole("button", { name: "全部展開", exact: true })
+    .click();
+  await expect(student.locator(".announcement-card")).toBeVisible();
+  await expect(
+    announcements.getByRole("button", { name: "全部收合", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
   await student.screenshot({
     path: ".local/10-home-mobile.png",
     fullPage: true,

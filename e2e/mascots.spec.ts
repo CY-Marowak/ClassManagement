@@ -158,14 +158,15 @@ test("student sees points, feeds voluntarily, safely retries and shares class gr
     fullPage: true,
   });
   await page.reload();
-  await page.getByRole("button", { name: "班級吉祥物", exact: true }).click();
+  const classroom = page
+    .locator(".class-card")
+    .filter({ hasText: "共同成長班" });
   await expect(
-    page.getByText("累積總餵食量 5 exp", { exact: true }),
+    classroom.getByRole("button", { name: "記分", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "確認餵食", exact: true }),
+    classroom.getByRole("button", { name: "班級吉祥物", exact: true }),
   ).toHaveCount(0);
-  await expect(page.locator(".point-transaction")).toHaveCount(0);
   const emptyContext = await browser.newContext();
   const empty = await emptyContext.newPage();
   await empty.goto("/#student-login");

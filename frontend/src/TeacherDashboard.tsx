@@ -17,8 +17,7 @@ export type DashboardDestination =
   | "history"
   | "entry"
   | "awards"
-  | "announcements"
-  | "mascot";
+  | "announcements";
 
 export function TeacherDashboard({
   cohort,
@@ -114,7 +113,7 @@ export function TeacherDashboard({
             <button className="primary" onClick={() => onOpen("entry")}>
               開始記分
             </button>
-            <button className="secondary" onClick={() => onOpen("awards")}>
+            <button className="primary" onClick={() => onOpen("awards")}>
               發點數
             </button>
             <button
@@ -123,14 +122,14 @@ export function TeacherDashboard({
             >
               班級公告
             </button>
-            <button className="secondary" onClick={() => onOpen("mascot")}>
-              班級吉祥物
-            </button>
           </div>
           <section className="roster-panel" aria-label="最近十筆記分">
-            <div className="page-title">
+            <div className="page-title dashboard-history-header">
               <h2>最近十筆記分</h2>
-              <button className="text-button" onClick={() => onOpen("history")}>
+              <button
+                className="text-button dashboard-history-link"
+                onClick={() => onOpen("history")}
+              >
                 查看全部分數紀錄 →
               </button>
             </div>
