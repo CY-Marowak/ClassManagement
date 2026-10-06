@@ -1,3 +1,4 @@
+import { createRequestId } from "./requestId";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "./api";
 import type { ScoreRecord } from "./ScoreHistory";
@@ -85,7 +86,7 @@ export function ScoreChangeDialog({
         : {}),
     };
     const key = JSON.stringify(payload);
-    const requestId = requests.current.get(key) || crypto.randomUUID();
+    const requestId = requests.current.get(key) || createRequestId();
     requests.current.set(key, requestId);
     submitting.current = true;
     setBusy(true);

@@ -1,3 +1,4 @@
+import { createRequestId } from "./requestId";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { JSONContent } from "@tiptap/react";
 import { api, ApiError } from "./api";
@@ -101,7 +102,7 @@ export function AnnouncementComments({
     if (!pending.current && operation)
       pending.current = {
         ...operation,
-        values: { ...operation.values, request_id: crypto.randomUUID() },
+        values: { ...operation.values, request_id: createRequestId() },
       };
     const request = pending.current;
     if (!request) return;

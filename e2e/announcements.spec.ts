@@ -2,6 +2,13 @@ import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
+test.use({ actionTimeout: 10000 });
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => {
+    Object.defineProperty(crypto, "randomUUID", { value: undefined });
+  });
+});
+
 async function post(page: Page, path: string, data: unknown) {
   const { csrfToken } = await (await page.request.get("/api/csrf/")).json();
   const response = await page.request.post(`/api${path}`, {
@@ -135,6 +142,71 @@ test("homeroom publishes rich text and student reads announcement before points"
       ),
   ).toBe(true);
   await student.setViewportSize({ width: 390, height: 844 });
+  await post(page, `/classes/${cohort.id}/announcements/`, {
+    title: "另一則公告",
+    body: {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "另一則的內容" }],
+        },
+      ],
+    },
+    request_id: crypto.randomUUID(),
+  });
+  await student.reload();
+  await student
+    .getByRole("button", { name: "閱讀公告：戶外教學", exact: true })
+    .click();
+  await expect(student.locator(".announcement-card")).toHaveCount(1);
+  await expect(student.locator(".announcement-card")).toContainText(
+    "明天帶水壺",
+  );
+  await expect(student.getByText("另一則的內容", { exact: true })).toHaveCount(
+    0,
+  );
+  await expect(
+    student.getByRole("region", { name: "我的點數", exact: true }),
+  ).toBeHidden();
+  await expect(
+    student.getByRole("button", { name: "← 返回公告清單", exact: true }),
+  ).toBeFocused();
+  await student.screenshot({
+    path: ".local/13-announcement-detail-mobile.png",
+    fullPage: true,
+  });
+  await student
+    .getByRole("button", { name: "← 返回公告清單", exact: true })
+    .click();
+  await expect(student.locator(".announcement-card")).toHaveCount(2);
+  await expect(
+    student.getByRole("button", { name: "閱讀公告：戶外教學", exact: true }),
+  ).toBeFocused();
+  await page.getByRole("button", { name: "重新載入公告", exact: true }).click();
+  await page
+    .getByRole("button", { name: "閱讀公告：戶外教學", exact: true })
+    .click();
+  await expect(page.locator(".announcement-card")).toHaveCount(1);
+  await expect(page.getByText("另一則的內容", { exact: true })).toHaveCount(0);
+  await page.screenshot({
+    path: ".local/13-announcement-detail-desktop.png",
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "← 返回公告清單", exact: true })
+    .click();
+  // Remove only the extra test announcement to continue the original workflow.
+  const extra = page
+    .locator(".announcement-card")
+    .filter({ hasText: "另一則公告" });
+  await extra.getByRole("button", { name: "刪除", exact: true }).click();
+  await page.getByRole("button", { name: "確認刪除公告", exact: true }).click();
+  await expect(extra).toHaveCount(0);
+  await student
+    .getByRole("button", { name: "重新載入公告", exact: true })
+    .click();
+  await expect(student.locator(".announcement-card")).toHaveCount(1);
   const announcements = student.getByRole("region", {
     name: "班級公告",
     exact: true,
@@ -170,6 +242,9 @@ test("homeroom publishes rich text and student reads announcement before points"
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await page
+    .getByRole("button", { name: "閱讀公告：戶外教學", exact: true })
+    .click();
   await card.getByRole("button", { name: "編輯", exact: true }).click();
   await page.getByLabel("公告標題").fill("戶外教學更新");
   await editor.click();

@@ -4,6 +4,13 @@ import { resolve } from "node:path";
 
 test.use({ actionTimeout: 10000 });
 
+// LAN HTTP browsers expose getRandomValues, but not randomUUID.
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => {
+    Object.defineProperty(crypto, "randomUUID", { value: undefined });
+  });
+});
+
 test("teachers award own sources once, recover stale selections, and keep points after deletion", async ({
   page,
   browser,

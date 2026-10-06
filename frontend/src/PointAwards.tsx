@@ -1,3 +1,4 @@
+import { createRequestId } from "./requestId";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, ApiError, type Cohort } from "./api";
 import type { ScoreRecord } from "./ScoreHistory";
@@ -84,7 +85,7 @@ export function PointAwards({
       }))
       .sort((a, b) => a.record_id - b.record_id);
     const key = JSON.stringify(items);
-    const requestId = requests.current.get(key) ?? crypto.randomUUID();
+    const requestId = requests.current.get(key) ?? createRequestId();
     requests.current.set(key, requestId);
     submitting.current = true;
     setBusy(true);

@@ -33,6 +33,29 @@ npm.cmd run dev
 
 本機 PostgreSQL 監聽 `127.0.0.1:55432`，資料庫 cm，開發帳號 cm／cm-local-only。這組設定僅供本機開發，資料保存在 `.local/postgres/`。不會安裝系統服務，也不會自動刪除資料。停止資料庫：`npm.cmd run db:stop`。
 
+## 使用手機在區網試用（PowerShell）
+
+電腦與手機連到同一個 Wi-Fi。先用 `ipconfig` 找電腦目前的 IPv4；以下 `192.168.1.100` 必須換成實際位址。停止舊的前後端後，在 app 資料夾開 PowerShell：
+
+```powershell
+npm.cmd run db:start
+$env:CM_ALLOWED_HOSTS='127.0.0.1,localhost,192.168.1.100'
+$env:CM_FRONTEND_URL='http://192.168.1.100:5173'
+node scripts/backend.mjs
+```
+
+另一個 PowerShell 在 app 執行：
+
+```powershell
+npm.cmd --prefix frontend run dev -- --host 0.0.0.0
+```
+
+手機開啟 `http://192.168.1.100:5173`，更新程式後重新整理頁面。後端仍由 Vite 代理到 `127.0.0.1:8000`。防火牆如詢問，允許 Node.js 的私人網路連線。
+
+PowerShell 必須使用 `$env:`；`set CM_FRONTEND_URL=...` 是 CMD 語法。IP 改變時重新設定並重啟後端。若 API 回報 CSRF／Origin 錯誤，核對 CM_FRONTEND_URL 與手機網址的協定、IP、連接埠完全一致。
+
+區網 HTTP 通常不提供 `crypto.randomUUID()`；CM 的操作識別會改用 `crypto.getRandomValues()` 產生 UUID，仍保留重試去重。這不會關閉 CSRF 防護，也不是唯讀模式。正式部署仍使用 HTTPS。
+
 ## 如何試用註冊及忘記密碼
 
 開發環境不寄真實郵件。提交註冊後，開啟 `.local/mail/` 最新的 `.log` 信件；由於 MIME 編碼，可用以下命令取得連結：

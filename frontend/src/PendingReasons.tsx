@@ -1,3 +1,4 @@
+import { createRequestId } from "./requestId";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, ApiError } from "./api";
 import { type ScorePage, type ScoreRecord } from "./ScoreHistory";
@@ -54,7 +55,7 @@ export function PendingReasons({
       note: note.trim(),
     };
     const fingerprint = JSON.stringify(payload);
-    const requestId = requests.current.get(fingerprint) || crypto.randomUUID();
+    const requestId = requests.current.get(fingerprint) || createRequestId();
     requests.current.set(fingerprint, requestId);
     submitting.current = true;
     setBusy(true);

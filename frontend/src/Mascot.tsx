@@ -1,3 +1,4 @@
+import { createRequestId } from "./requestId";
 import {
   useCallback,
   useEffect,
@@ -136,7 +137,7 @@ export function Mascot({
     event.preventDefault();
     if (busy) return;
     readVersion.current++;
-    const request = pending || { points, request_id: crypto.randomUUID() };
+    const request = pending || { points, request_id: createRequestId() };
     setError("");
     setNotice("");
     setBusy(true);
