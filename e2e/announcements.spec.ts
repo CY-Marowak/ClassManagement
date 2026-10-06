@@ -159,13 +159,11 @@ test("homeroom publishes rich text and student reads announcement before points"
   await student
     .getByRole("button", { name: "閱讀公告：戶外教學", exact: true })
     .click();
-  await expect(student.locator(".announcement-card")).toHaveCount(1);
-  await expect(student.locator(".announcement-card")).toContainText(
+  await expect(student.locator(".announcement-card:visible")).toHaveCount(1);
+  await expect(student.locator(".announcement-card:visible")).toContainText(
     "明天帶水壺",
   );
-  await expect(student.getByText("另一則的內容", { exact: true })).toHaveCount(
-    0,
-  );
+  await expect(student.getByText("另一則的內容", { exact: true })).toBeHidden();
   await expect(
     student.getByRole("region", { name: "我的點數", exact: true }),
   ).toBeHidden();
@@ -187,8 +185,8 @@ test("homeroom publishes rich text and student reads announcement before points"
   await page
     .getByRole("button", { name: "閱讀公告：戶外教學", exact: true })
     .click();
-  await expect(page.locator(".announcement-card")).toHaveCount(1);
-  await expect(page.getByText("另一則的內容", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".announcement-card:visible")).toHaveCount(1);
+  await expect(page.getByText("另一則的內容", { exact: true })).toBeHidden();
   await page.screenshot({
     path: ".local/13-announcement-detail-desktop.png",
     fullPage: true,

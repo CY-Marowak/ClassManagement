@@ -2,6 +2,13 @@ import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
+test.use({ actionTimeout: 10000 });
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => {
+    Object.defineProperty(crypto, "randomUUID", { value: undefined });
+  });
+});
+
 async function post(page: Page, path: string, data: unknown) {
   const { csrfToken } = await (await page.request.get("/api/csrf/")).json();
   const response = await page.request.post(`/api${path}`, {
@@ -54,6 +61,11 @@ test("co-teacher comments, student reads and homeroom moderates without authorin
     body,
     request_id: crypto.randomUUID(),
   });
+  await post(owner, base + "announcements/", {
+    title: "另一篇閱讀測試",
+    body,
+    request_id: crypto.randomUUID(),
+  });
   const { application_code } = await (
     await owner.request.get(`/api${base}teachers/`)
   ).json();
@@ -69,7 +81,11 @@ test("co-teacher comments, student reads and homeroom moderates without authorin
   await page.reload();
   await page.getByRole("button", { name: "班級公告", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "留言內文" })).toHaveCount(0);
-  await page.getByRole("button", { name: "留言（0）", exact: true }).click();
+  await page
+    .locator(".announcement-card")
+    .filter({ hasText: "出發提醒" })
+    .getByRole("button", { name: "留言（0）", exact: true })
+    .click();
   const editor = page.getByRole("textbox", { name: "留言內文" });
   await editor.fill("請帶雨衣");
   await editor.press("ControlOrMeta+a");
@@ -88,6 +104,14 @@ test("co-teacher comments, student reads and homeroom moderates without authorin
   await page.getByRole("button", { name: "發布留言", exact: true }).click();
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(editor).toHaveAttribute("contenteditable", "false");
+  await page
+    .getByRole("button", { name: "閱讀公告：另一篇閱讀測試", exact: true })
+    .click();
+  await expect(page.locator(".announcement-card:visible")).toHaveCount(1);
+  await page
+    .getByRole("button", { name: "← 返回公告清單", exact: true })
+    .click();
+  await expect(editor).toHaveText("請帶雨衣");
   await page.getByRole("button", { name: "重試這次留言操作" }).click();
   await expect(page.locator(".comment-card")).toHaveCount(1);
   await expect(
@@ -171,7 +195,10 @@ test("co-teacher comments, student reads and homeroom moderates without authorin
     .click();
   await expect(owner.locator(".comment-card")).toHaveCount(0);
   await expect(
-    owner.getByRole("button", { name: "留言（0）", exact: true }),
+    owner
+      .locator(".announcement-card")
+      .filter({ hasText: "出發提醒" })
+      .getByRole("button", { name: "留言（0）", exact: true }),
   ).toBeVisible();
   await student.getByRole("button", { name: "更新留言", exact: true }).click();
   await expect(student.locator(".comment-card")).toHaveCount(0);

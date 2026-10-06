@@ -166,7 +166,7 @@ export function Announcements({
         <div>
           <p className="eyebrow">{cohort?.name || "班級日常"}</p>
           <h1>班級公告</h1>
-          {!cohort && data && (
+          {!cohort && data && selectedId === null && (
             <p className="muted small">共 {data.count} 則公告</p>
           )}
         </div>
@@ -321,84 +321,86 @@ export function Announcements({
           </div>
         )}
         {loading && <p role="status">正在載入公告…</p>}
-        {data?.results.map((item) =>
-          selectedId !== null && item.id !== selectedId ? null : (
-            <article className="announcement-card" key={item.id}>
-              {item.is_pinned && <span className="badge">置頂</span>}
-              <h3>
-                {selectedId === null ? (
-                  <button
-                    className="announcement-title"
-                    aria-label={`閱讀公告：${item.title}`}
-                    disabled={locked || loading || !!draft || !!deleting}
-                    ref={(node) => {
-                      if (node && openedId.current === item.id)
-                        openedButton.current = node;
-                    }}
-                    onClick={(event) => {
-                      openedId.current = item.id;
-                      openedButton.current = event.currentTarget;
-                      setNotice("");
-                      setSelectedId(item.id);
-                    }}
-                  >
-                    {item.title}
-                  </button>
-                ) : (
-                  item.title
-                )}
-              </h3>
-              <p className="muted small">
-                {item.creator_name} ·{" "}
-                {new Date(item.created_at).toLocaleString("zh-TW")}
-                {item.edited_at && (
-                  <>
-                    {" "}
-                    · 已編輯 {new Date(item.edited_at).toLocaleString("zh-TW")}
-                  </>
-                )}
-              </p>
-              <AnnouncementContent body={item.body} />
-              <AnnouncementComments
-                endpoint={`${endpoint}${item.id}/comments/`}
-                initialCount={item.comment_count}
-              />
-              {editable && (
-                <div className="actions">
-                  <button
-                    className="text-button"
-                    disabled={locked || loading || !!draft || !!deleting}
-                    onClick={() =>
-                      setDraft({ item, title: item.title, body: item.body })
-                    }
-                  >
-                    編輯
-                  </button>
-                  <button
-                    className="text-button"
-                    disabled={locked || loading || !!draft || !!deleting}
-                    onClick={() =>
-                      mutate(`${endpoint}${item.id}/`, {
-                        action: "pin",
-                        revision: item.revision,
-                        is_pinned: !item.is_pinned,
-                      })
-                    }
-                  >
-                    {item.is_pinned ? "取消置頂" : "置頂"}
-                  </button>
-                  <button
-                    className="text-button danger-text"
-                    disabled={locked || loading || !!draft || !!deleting}
-                    onClick={() => setDeleting(item)}
-                  >
-                    刪除
-                  </button>
-                </div>
+        {data?.results.map((item) => (
+          <article
+            className="announcement-card"
+            key={item.id}
+            hidden={selectedId !== null && item.id !== selectedId}
+          >
+            {item.is_pinned && <span className="badge">置頂</span>}
+            <h3>
+              {selectedId === null ? (
+                <button
+                  className="announcement-title"
+                  aria-label={`閱讀公告：${item.title}`}
+                  disabled={locked || loading || !!draft || !!deleting}
+                  ref={(node) => {
+                    if (node && openedId.current === item.id)
+                      openedButton.current = node;
+                  }}
+                  onClick={(event) => {
+                    openedId.current = item.id;
+                    openedButton.current = event.currentTarget;
+                    setNotice("");
+                    setSelectedId(item.id);
+                  }}
+                >
+                  {item.title}
+                </button>
+              ) : (
+                item.title
               )}
-            </article>
-          ),
-        )}
+            </h3>
+            <p className="muted small">
+              {item.creator_name} ·{" "}
+              {new Date(item.created_at).toLocaleString("zh-TW")}
+              {item.edited_at && (
+                <>
+                  {" "}
+                  · 已編輯 {new Date(item.edited_at).toLocaleString("zh-TW")}
+                </>
+              )}
+            </p>
+            <AnnouncementContent body={item.body} />
+            <AnnouncementComments
+              endpoint={`${endpoint}${item.id}/comments/`}
+              initialCount={item.comment_count}
+            />
+            {editable && (
+              <div className="actions">
+                <button
+                  className="text-button"
+                  disabled={locked || loading || !!draft || !!deleting}
+                  onClick={() =>
+                    setDraft({ item, title: item.title, body: item.body })
+                  }
+                >
+                  編輯
+                </button>
+                <button
+                  className="text-button"
+                  disabled={locked || loading || !!draft || !!deleting}
+                  onClick={() =>
+                    mutate(`${endpoint}${item.id}/`, {
+                      action: "pin",
+                      revision: item.revision,
+                      is_pinned: !item.is_pinned,
+                    })
+                  }
+                >
+                  {item.is_pinned ? "取消置頂" : "置頂"}
+                </button>
+                <button
+                  className="text-button danger-text"
+                  disabled={locked || loading || !!draft || !!deleting}
+                  onClick={() => setDeleting(item)}
+                >
+                  刪除
+                </button>
+              </div>
+            )}
+          </article>
+        ))}
         {data && !data.count && <p className="muted">目前沒有公告。</p>}
         {selectedId === null && data && data.count > 10 && (
           <nav className="actions" aria-label="公告分頁">
