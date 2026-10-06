@@ -43,7 +43,7 @@ def active_announcement(cohort_id, announcement_id):
 
 
 def comment_data(item, user, member):
-    own = member is not None and member.role == "coTeacher" and item.creator_id == user.pk
+    own = member is not None and item.creator_id == user.pk
     return {
         "id": item.pk,
         "body": item.body,
@@ -69,7 +69,7 @@ def comment_page(request, announcement: Announcement, member=None):
     response = paginator.get_paginated_response(
         [comment_data(item, request.user, member) for item in page]
     )
-    response.data["can_create"] = member is not None and member.role == "coTeacher"
+    response.data["can_create"] = member is not None
     return response
 
 
@@ -112,8 +112,6 @@ class CommentsView(APIView):
         with transaction.atomic():
             get_object_or_404(Cohort.objects.select_for_update(), pk=pk)
             member = require_teacher(request.user, pk)
-            if member.role != "coTeacher":
-                raise PermissionDenied("只有共同教師可新增留言。")
             announcement = active_announcement(pk, announcement_id)
             previous = prior_comment_result(pk, request.user, values, digest)
             if previous is not None:

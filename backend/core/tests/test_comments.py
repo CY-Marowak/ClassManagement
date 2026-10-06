@@ -99,7 +99,34 @@ class CommentTests(APITestCase):
             self.client.get(self.base + "announcements/").json()["results"][0]["comment_count"], 0
         )
 
-    def test_only_approved_coteacher_posts_and_class_members_read_rich_text(self):
+    def test_homeroom_authors_own_comments_and_others_only_read(self):
+        identity = str(uuid.uuid4())
+        response = self.post_comment(self.client, request_id=identity)
+        self.assertEqual(response.status_code, 201)
+        item = response.json()
+        self.assertTrue(item["can_edit"])
+        self.assertTrue(item["can_delete"])
+        self.assertEqual(self.post_comment(self.client, request_id=identity).json(), item)
+        self.assertEqual(self.client.get(self.path).json()["count"], 1)
+        body = test_announcements.document("導師補充")
+        self.assertEqual(self.change_comment(item, body=body).status_code, 403)
+        self.assertEqual(self.change_comment(item, action="delete").status_code, 403)
+        edited = self.change_comment(item, self.client, body=body)
+        self.assertEqual(edited.status_code, 200)
+        for client, path in [
+            (self.writer, self.path),
+            (self.student_login(), self.student_path),
+        ]:
+            visible = client.get(path).json()["results"][0]
+            self.assertEqual(visible["body"], body)
+            self.assertFalse(visible["can_edit"])
+            self.assertFalse(visible["can_delete"])
+        self.assertEqual(
+            self.change_comment(edited.json(), self.client, action="delete").status_code, 200
+        )
+        self.assertEqual(self.client.get(self.path).json()["count"], 0)
+
+    def test_approved_teachers_post_and_class_members_read_rich_text(self):
         body = test_announcements.document("記得帶雨衣", [{"type": "italic"}])
         response = self.post_comment(body=body)
         self.assertEqual(response.status_code, 201)
@@ -114,11 +141,10 @@ class CommentTests(APITestCase):
             page = client.get(path).json()
             self.assertEqual(page["count"], 1)
             self.assertEqual(page["results"][0]["body"], body)
-            self.assertEqual(page["can_create"], client is self.writer)
+            self.assertEqual(page["can_create"], client is self.writer or client is self.client)
         self.assertEqual(
             self.client.get(self.base + "announcements/").json()["results"][0]["comment_count"], 1
         )
-        self.assertEqual(self.post_comment(self.client).status_code, 403)
         student = self.student_login("002", change=False)
         self.assertEqual(student.get(self.student_path).status_code, 403)
         self.assertEqual(student.post(self.student_path, {}).status_code, 403)

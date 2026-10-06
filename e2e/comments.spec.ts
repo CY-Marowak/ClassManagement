@@ -35,7 +35,7 @@ async function teacher(page: Page, name: string) {
   await post(page, "/auth/login/", { email, password });
 }
 
-test("co-teacher comments, student reads and homeroom moderates without authoring", async ({
+test("teachers author their own comments, student reads and homeroom moderates", async ({
   page,
   browser,
 }) => {
@@ -163,8 +163,37 @@ test("co-teacher comments, student reads and homeroom moderates without authorin
   await owner.reload();
   await owner.getByRole("button", { name: "班級公告", exact: true }).click();
   await owner.getByRole("button", { name: "留言（1）", exact: true }).click();
-  await expect(owner.getByRole("textbox", { name: "留言內文" })).toHaveCount(0);
+  const ownerEditor = owner.getByRole("textbox", { name: "留言內文" });
+  await expect(ownerEditor).toBeVisible();
   await expect(owner.getByRole("button", { name: "編輯留言" })).toHaveCount(0);
+  await owner.setViewportSize({ width: 390, height: 844 });
+  await ownerEditor.fill("導師補充集合時間");
+  await owner.getByRole("button", { name: "發布留言", exact: true }).click();
+  const ownComment = owner
+    .locator(".comment-card")
+    .filter({ hasText: "導師補充" });
+  await expect(ownComment).toBeVisible();
+  await ownComment
+    .getByRole("button", { name: "編輯留言", exact: true })
+    .click();
+  await ownerEditor.fill("導師補充：八點集合");
+  await owner.getByRole("button", { name: "儲存留言", exact: true }).click();
+  await expect(ownComment).toContainText("已編輯");
+  await student.getByRole("button", { name: "更新留言", exact: true }).click();
+  await expect(student.locator(".comment-card").last()).toContainText(
+    "導師補充：八點集合",
+  );
+  await expect(student.getByRole("button", { name: "編輯留言" })).toHaveCount(
+    0,
+  );
+  await ownComment
+    .getByRole("button", { name: "刪除留言", exact: true })
+    .click();
+  await owner
+    .getByRole("button", { name: "確認刪除留言", exact: true })
+    .click();
+  await expect(ownComment).toHaveCount(0);
+  await expect(owner.locator(".comment-card")).toHaveCount(1);
   await owner.getByRole("button", { name: "刪除留言", exact: true }).click();
   let releaseRefresh!: () => void;
   const refreshGate = new Promise<void>((resolve) => {
