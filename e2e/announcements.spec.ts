@@ -210,10 +210,10 @@ test("homeroom publishes rich text and student reads announcement before points"
     exact: true,
   });
   await announcements
-    .getByRole("button", { name: "全部收合", exact: true })
+    .getByRole("button", { name: "公告收合", exact: true })
     .click();
   await expect(
-    announcements.getByRole("button", { name: "全部展開", exact: true }),
+    announcements.getByRole("button", { name: "公告展開", exact: true }),
   ).toHaveAttribute("aria-expanded", "false");
   await expect(student.locator(".announcement-card")).toBeHidden();
   await expect(
@@ -225,11 +225,11 @@ test("homeroom publishes rich text and student reads announcement before points"
     fullPage: true,
   });
   await announcements
-    .getByRole("button", { name: "全部展開", exact: true })
+    .getByRole("button", { name: "公告展開", exact: true })
     .click();
   await expect(student.locator(".announcement-card")).toBeVisible();
   await expect(
-    announcements.getByRole("button", { name: "全部收合", exact: true }),
+    announcements.getByRole("button", { name: "公告收合", exact: true }),
   ).toHaveAttribute("aria-expanded", "true");
   await student.screenshot({
     path: ".local/10-home-mobile.png",

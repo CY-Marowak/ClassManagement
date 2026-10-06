@@ -177,7 +177,7 @@ export function Announcements({
             aria-controls={contentId}
             onClick={() => setCollapsed((value) => !value)}
           >
-            {collapsed ? "全部展開" : "全部收合"}
+            {collapsed ? "公告展開" : "公告收合"}
           </button>
         )}
       </header>
