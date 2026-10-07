@@ -54,6 +54,8 @@ npm.cmd --prefix frontend run dev -- --host 0.0.0.0
 
 PowerShell 必須使用 `$env:`；`set CM_FRONTEND_URL=...` 是 CMD 語法。IP 改變時重新設定並重啟後端。若 API 回報 CSRF／Origin 錯誤，核對 CM_FRONTEND_URL 與手機網址的協定、IP、連接埠完全一致。
 
+開發模式同時信任 `CM_FRONTEND_URL`、`http://127.0.0.1:5173` 與 `http://localhost:5173`，因此設定手機網址後，電腦仍可用本機網址操作。不同主機名稱需各自登入。更新此設定後請停止並重新執行 `node scripts/backend.mjs`，再重新整理網頁；此啟動方式不會自動重載後端。正式模式只信任設定的 `CM_FRONTEND_URL`，所有模式仍須通過 CSRF token 驗證。
+
 區網 HTTP 通常不提供 `crypto.randomUUID()`；CM 的操作識別會改用 `crypto.getRandomValues()` 產生 UUID，仍保留重試去重。這不會關閉 CSRF 防護，也不是唯讀模式。正式部署仍使用 HTTPS。
 
 ## 如何試用註冊及忘記密碼

@@ -1,5 +1,10 @@
+import os
+import runpy
 import uuid
+from unittest.mock import patch
 
+from django.conf import settings
+from django.test import override_settings
 from rest_framework.test import APIClient, APITestCase
 
 from core.models import ClassMember, User
@@ -34,6 +39,78 @@ class CommentTests(APITestCase):
             },
             format="json",
         )
+
+    def test_homeroom_comments_from_local_and_lan_origins_require_csrf(self):
+        with patch.dict(
+            os.environ,
+            {"CM_DEBUG": "1", "CM_FRONTEND_URL": "http://192.168.1.100:5173"},
+        ):
+            config = runpy.run_path(str(settings.BASE_DIR / "config" / "settings.py"))
+        with override_settings(CSRF_TRUSTED_ORIGINS=config["CSRF_TRUSTED_ORIGINS"]):
+            client = APIClient(enforce_csrf_checks=True)
+            client.force_login(self.owner)
+            token = client.get("/api/csrf/").json()["csrfToken"]
+            for origin in [
+                "http://127.0.0.1:5173",
+                "http://localhost:5173",
+                "http://192.168.1.100:5173",
+            ]:
+                with self.subTest(origin=origin):
+                    headers = {"HTTP_HOST": "127.0.0.1:8000", "HTTP_ORIGIN": origin}
+                    payload = {
+                        "body": test_announcements.document("導師補充"),
+                        "request_id": str(uuid.uuid4()),
+                    }
+                    self.assertEqual(
+                        client.post(self.path, payload, format="json", **headers).status_code,
+                        403,
+                    )
+                    response = client.post(
+                        self.path, payload, format="json", HTTP_X_CSRFTOKEN=token, **headers
+                    )
+                    self.assertEqual(response.status_code, 201, response.json())
+            rejected = client.post(
+                self.path,
+                {"body": test_announcements.document(), "request_id": str(uuid.uuid4())},
+                format="json",
+                HTTP_HOST="127.0.0.1:8000",
+                HTTP_ORIGIN="http://untrusted.example:5173",
+                HTTP_X_CSRFTOKEN=token,
+            )
+            self.assertEqual(rejected.status_code, 403)
+            self.assertEqual(client.get(self.path).json()["count"], 3)
+
+    def test_production_comments_do_not_trust_development_origins(self):
+        with patch.dict(
+            os.environ,
+            {
+                "CM_DEBUG": "0",
+                "CM_SECRET_KEY": "test-only-production-settings",
+                "CM_FRONTEND_URL": "https://cm.example.com",
+            },
+        ):
+            config = runpy.run_path(str(settings.BASE_DIR / "config" / "settings.py"))
+        with override_settings(CSRF_TRUSTED_ORIGINS=config["CSRF_TRUSTED_ORIGINS"]):
+            client = APIClient(enforce_csrf_checks=True)
+            client.force_login(self.owner)
+            token = client.get("/api/csrf/").json()["csrfToken"]
+            for origin, expected in [
+                ("http://127.0.0.1:5173", 403),
+                ("http://localhost:5173", 403),
+                ("http://192.168.1.100:5173", 403),
+                ("https://cm.example.com", 201),
+            ]:
+                with self.subTest(origin=origin):
+                    response = client.post(
+                        self.path,
+                        {"body": test_announcements.document(), "request_id": str(uuid.uuid4())},
+                        format="json",
+                        HTTP_HOST="127.0.0.1:8000",
+                        HTTP_ORIGIN=origin,
+                        HTTP_X_CSRFTOKEN=token,
+                    )
+                    self.assertEqual(response.status_code, expected, response.json())
+            self.assertEqual(client.get(self.path).json()["count"], 1)
 
     def change_comment(self, item, client=None, **values):
         return (client or self.writer).post(
