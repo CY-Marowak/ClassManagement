@@ -68,7 +68,7 @@ PowerShell 必須使用 `$env:`；`set CM_FRONTEND_URL=...` 是 CMD 語法。IP 
 
 將 Email 換成你剛註冊的地址；忘記密碼時把 `verify` 換成 `reset`。開啟連結後，按畫面按鈕確認。連結 30 分鐘內有效、只能使用一次；重新寄送會讓舊連結失效。
 
-Email 不需要真實存在就能本機試用。正式上線前必須配置 SMTP、寄件地址、HTTPS、秘密金鑰與正式資料庫。不要把 `.local`、`.env` 或 `.venv` 提交到 Git。
+Email 不需要真實存在就能本機試用。正式上線採 Resend HTTPS API；真實寄信尚待配置寄件網域。部署與資料庫設定見 [DEPLOYMENT.md](DEPLOYMENT.md)。不要把 `.local`、`.env` 或 `.venv` 提交到 Git。
 
 ## 如何永久刪除班級
 
@@ -246,7 +246,7 @@ $env:PYTHONIOENCODING='utf-8'
 .\.venv\Scripts\python.exe backend/manage.py create_demo
 ```
 
-每次明確執行建立一套全新的假帳號與兩個班級，不重設、清除或覆寫既有資料。指令僅在開發模式執行，輸出 JSON 包含 `cohort`（展示班）、`other_cohort`（隔離班）、`teachers`（四種教师登入資訊）與 `student`（展示學生登入資訊）。保留本次輸出供切換帳號；不會另外將明文密碼存入檔案。
+每次明確執行建立一套全新的假帳號與兩個班級，不重設、清除或覆寫既有資料。指令預設僅在開發模式執行；公開假資料展示可在受控終端明確設定 CM_ALLOW_DEMO_DATA=1，保持 CM_DEBUG=0，詳見 [DEPLOYMENT.md](DEPLOYMENT.md)。輸出 JSON 包含 `cohort`（展示班）、`other_cohort`（隔離班）、`teachers`（四種教师登入資訊）與 `student`（展示學生登入資訊）。保留本次輸出供切換帳號；不會另外將明文密碼存入檔案。
 
 教師的 `email`／`password` 可直接登入，demo 帳號已驗證 Email。學生學號 001、初始密碼 001，登入時仍須完成首次改密碼。每次 demo 的班級登入碼不同，請使用本次輸出。展示班有三位學生、兩列匯入錯誤、一位待審教師、一筆待補原因、三筆記分、置頂公告及共同教師留言，點數與吉祥物經驗值從 0 開始。
 
@@ -306,3 +306,7 @@ API 測試使用獨立的 `test_cm` PostgreSQL 資料庫。瀏覽器測試使用
 - 上線設定由環境變數提供，見 `.env.example`；檔案只供參考，Django 不會自動讀取它。
 
 領域與決策來源：上層 `instructions.md`、`Implementation-decisions.md`、`CONTEXT.md`、`planning/cm-v1/spec.md` 與 `planning/cm-v1/issues/01-teacher-login-class.md`。
+
+## Render／Neon 部署
+
+正式容器、環境設定、假資料初始化及驗收步驟見 [DEPLOYMENT.md](DEPLOYMENT.md)。部署設定不代表已完成公開驗收；真實寄信、備份及老師試用分開追蹤。

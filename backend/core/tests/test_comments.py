@@ -87,6 +87,7 @@ class CommentTests(APITestCase):
                 "CM_DEBUG": "0",
                 "CM_SECRET_KEY": "test-only-production-settings",
                 "CM_FRONTEND_URL": "https://cm.example.com",
+                "DATABASE_URL": "postgresql://test:placeholder@localhost/test",
             },
         ):
             config = runpy.run_path(str(settings.BASE_DIR / "config" / "settings.py"))

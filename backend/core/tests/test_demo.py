@@ -9,6 +9,13 @@ from rest_framework.test import APITestCase
 
 @override_settings(DEBUG=True)
 class DemoTests(APITestCase):
+    @override_settings(DEBUG=False, ALLOW_DEMO_DATA=True)
+    def test_explicit_demo_environment_can_seed_without_debug(self):
+        output = io.StringIO()
+        call_command("create_demo", stdout=output)
+        credentials = json.loads(output.getvalue())["teachers"]["homeroom"]
+        self.assertEqual(self.client.post("/api/auth/login/", credentials).status_code, 200)
+
     @override_settings(DEBUG=False)
     def test_demo_requires_local_development_mode(self):
         from django.core.management import CommandError

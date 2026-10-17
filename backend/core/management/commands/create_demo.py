@@ -30,10 +30,10 @@ def document(text):
 
 
 class Command(BaseCommand):
-    help = "Create a new, independent local demonstration. Existing data is never reset."
+    help = "Create independent fake data. Requires DEBUG or explicit CM_ALLOW_DEMO_DATA=1."
 
     def handle(self, *args, **options):
-        if not settings.DEBUG:
+        if not (settings.DEBUG or settings.ALLOW_DEMO_DATA):
             raise CommandError("Demo 僅供本機開發，請設定 CM_DEBUG=1。")
         identity = uuid.uuid4().hex
         password = "Demo!" + secrets.token_urlsafe(16)

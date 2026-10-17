@@ -20,7 +20,10 @@ from core.student_management import ResetStudentPasswordView, StudentDetailView,
 from core.students import StudentLoginView, StudentMeView, StudentPasswordView, StudentsView
 from django.urls import path
 
+from .deployment import health
+
 urlpatterns = [
+    path("healthz", health),
     path("api/classes/<int:pk>/import-issues/", ImportIssuesView.as_view()),
     path("api/classes/<int:pk>/import-issues/<int:issue_id>/", ResolveImportIssueView.as_view()),
     path("api/classes/<int:pk>/dashboard/", DashboardView.as_view()),

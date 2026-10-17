@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: cm-mvp1
+    runtime: docker
+    plan: free
+    region: singapore
+    autoDeployTrigger: off
+    healthCheckPath: /healthz
+    envVars:
+      - key: CM_SECRET_KEY
+        generateValue: true
+      - key: CM_DEBUG
+        value: "0"
+      - key: CM_TRUST_RENDER_PROXY
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
