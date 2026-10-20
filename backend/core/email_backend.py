@@ -4,6 +4,7 @@ import json
 import logging
 import urllib.request
 from email.utils import parseaddr
+from http.client import HTTPException
 from urllib.error import HTTPError
 
 from django.conf import settings
@@ -59,7 +60,7 @@ class ResendEmailBackend(BaseEmailBackend):
                     result = json.load(response)
                 if not isinstance(result, dict) or not result.get("id"):
                     raise ValueError("Missing message ID")
-            except (OSError, ValueError) as error:
+            except (OSError, ValueError, HTTPException) as error:
                 # Never log request bodies, provider messages, tokens or credentials.
                 status = error.code if isinstance(error, HTTPError) else "transport_or_response"
                 logger.warning("Resend delivery failed (%s)", status)

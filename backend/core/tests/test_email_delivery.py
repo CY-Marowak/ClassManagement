@@ -2,6 +2,7 @@ import io
 import json
 import re
 from datetime import timedelta
+from http.client import IncompleteRead
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
@@ -143,6 +144,12 @@ class EmailDeliveryTests(APITestCase):
                 self.transport.side_effect = lambda *args, **kwargs: io.BytesIO(body)
                 response = self.client.post("/api/auth/register/", self.registration)
                 self.assertEqual(response.status_code, 503)
+
+    def test_truncated_provider_response_returns_safe_retryable_error(self):
+        self.transport.side_effect = IncompleteRead(b"private-response-fragment", 100)
+        response = self.client.post("/api/auth/register/", self.registration)
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json(), {"detail": "目前無法寄送信件，請稍後再試。"})
 
     @override_settings(
         DEFAULT_FROM_EMAIL="CM <hello@verified.example.com>", RESEND_TEST_RECIPIENT=""
