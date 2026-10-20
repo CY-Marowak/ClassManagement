@@ -56,9 +56,57 @@ query strings, headers, cookies and bodies; action tokens use URL fragments.
 6. Restart/redeploy and check the same account and data still work. Record cold
    start delay. A Free service sleeps when idle; no keep-alive job is included.
 
-The default email transport is not configured for this phase. Use the seeded
-verified teacher accounts; email registration/recovery is not accepted until
-the Resend task is complete. Do not enable DEBUG to work around missing email.
+Use the seeded verified teacher accounts until the Resend settings below have
+been deployed and actual receipt has been verified. Do not enable DEBUG to work
+around missing email.
+
+## Resend verification and password reset
+
+Production defaults to `core.email_backend.ResendEmailBackend`, using HTTPS
+`POST https://api.resend.com/emails`; it does not require SMTP ports. Local DEBUG
+still defaults to file-based mail so automated browser tests never send real mail.
+
+Set these private environment variables on Render:
+
+- `CM_EMAIL_BACKEND=core.email_backend.ResendEmailBackend` (explicit override).
+- `CM_RESEND_API_KEY`: a dedicated Resend sending-access key, kept in Render secrets.
+- `CM_FROM_EMAIL=CM <onboarding@resend.dev>` for the current owner-only test.
+- `CM_RESEND_TEST_RECIPIENT`: the exact email of the Resend account owner.
+- Keep `CM_FRONTEND_URL` at the public HTTPS origin (the Render default is suitable).
+
+The test-recipient restriction rejects other recipients; it never redirects their
+tokens to the owner. Using `resend.dev` without an explicit test recipient fails
+closed. For a later real trial, first verify an owned sender domain, change
+`CM_FROM_EMAIL`, and deliberately clear the test-recipient restriction. Do not
+claim other teachers can register while the test restriction is active.
+
+The API returns a safe JSON 503 on missing credentials, recipient restrictions,
+provider errors, malformed responses or timeouts. Logs contain only a category or
+HTTP status, never credentials, email bodies or action tokens. A failed send rolls
+back registration/token issuance and preserves previously valid links. The
+request has a 10-second network timeout and does not automatically retry. After
+an ambiguous timeout a provider might still deliver the mail, but the rolled-back
+token will not work; request a fresh link. API acceptance is not proof of inbox
+delivery. Resend and the database are separate systems, so even an accepted send
+can yield an unusable link if the subsequent database commit fails.
+
+After deployment, test with the permitted owner email:
+
+1. Register, receive the verification email, open its public HTTPS link and
+   confirm verification. Opening a link alone does not consume it.
+2. Log in, request a password reset, receive the email and set a new password.
+   Confirm the old password and existing sessions no longer work.
+3. Confirm a used link is rejected. Links expire after 30 minutes; requesting a
+   fresh link invalidates older links of the same purpose.
+4. Review Resend delivery status and the actual inbox/spam folder. Keep tokens
+   and credentials out of screenshots, Git and shared notes.
+
+Local regression coverage uses real PostgreSQL through the account API and mocks
+only Resend's external HTTP transport. Public receipt remains a separate manual
+acceptance step. No schema migration is required for this transport.
+
+References: [send API](https://resend.com/docs/api-reference/emails/send-email),
+[API errors](https://resend.com/docs/api-reference/errors).
 
 ## Before a real trial
 
