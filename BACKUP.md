@@ -34,6 +34,16 @@ external service settings or a point-in-time recovery system.
 
 ## R2 and daily workflow
 
+The owner requires **no additional charges** (2026-10-21). R2 activation was
+reported by the owner, but no account usage, bucket settings or enforceable
+zero-spend cap has been verified. Keep the ops job disabled: its
+`CM_BACKUP_ENABLED` variable must remain unset. Expected low usage and billing
+alerts are not a hard cap. R2 Standard's free tier includes 10 GB-month storage,
+1 million Class A and 10 million Class B operations monthly; excess usage is
+billable and other buckets can consume the same account allowance. Verify
+GitHub Actions billing controls too. Do not enable cloud execution until this
+constraint can be met. [R2 pricing](https://developers.cloudflare.com/r2/pricing/).
+
 The user selected `CY-Marowak/ClassManagement-ops` for the private workflow.
 Keep the product repository public; do not put a live backup workflow there.
 The ops repository checks out an explicitly reviewed product commit.
