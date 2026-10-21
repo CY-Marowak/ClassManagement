@@ -110,6 +110,10 @@ References: [send API](https://resend.com/docs/api-reference/emails/send-email),
 
 ## Before a real trial
 
+Backup setup, key custody, local CLI tests and the independent restore procedure
+are documented in [BACKUP.md](BACKUP.md). Issue 03 remains pending cloud acceptance
+until the private ops workflow, R2 and notification/restore drills are verified.
+
 - Configure Resend HTTPS email delivery with a verified sending domain, and test
   receipt, expiry, single use and recovery links on the public origin.
 - Configure daily encrypted PostgreSQL dumps to a private R2 Standard bucket,
