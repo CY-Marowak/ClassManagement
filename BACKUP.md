@@ -34,15 +34,18 @@ external service settings or a point-in-time recovery system.
 
 ## R2 and daily workflow
 
-The owner requires **no additional charges** (2026-10-21). R2 activation was
-reported by the owner, but no account usage, bucket settings or enforceable
-zero-spend cap has been verified. Keep the ops job disabled: its
-`CM_BACKUP_ENABLED` variable must remain unset. Expected low usage and billing
-alerts are not a hard cap. R2 Standard's free tier includes 10 GB-month storage,
+The owner selected guarded R2 operation on 2026-10-22, with avoiding additional
+charges as a priority. The account initially showed zero storage and billable
+usage; GitHub Actions has an account-wide zero-dollar stop-usage budget.
+Keep `CM_BACKUP_ENABLED` unset until setup and restore verification are complete.
+The ops CLI limits encrypted files to 50 MiB, projected bucket storage to 1 GiB,
+and reserved attempts to one per Taipei day (31 per calendar month), including
+failed exports. Incomplete inventory or failed checks stop uploads. These
+controls are not an account-wide R2 billing cap. R2 Standard includes 10 GB-month storage,
 1 million Class A and 10 million Class B operations monthly; excess usage is
 billable and other buckets can consume the same account allowance. Verify
-GitHub Actions billing controls too. Do not enable cloud execution until this
-constraint can be met. [R2 pricing](https://developers.cloudflare.com/r2/pricing/).
+GitHub Actions billing controls too, and keep its zero-dollar stop-usage budget.
+[R2 pricing](https://developers.cloudflare.com/r2/pricing/).
 
 The user selected `CY-Marowak/ClassManagement-ops` for the private workflow.
 Keep the product repository public; do not put a live backup workflow there.
@@ -55,6 +58,9 @@ objects. This is a retention period, not a guarantee of exactly 14 files. R2
 typically deletes expired objects within 24 hours of expiry, so physical removal
 can be later. The tool itself does not perform bulk deletion. See
 [R2 lifecycle documentation](https://developers.cloudflare.com/r2/buckets/object-lifecycles/).
+Retain `cm/control/` attempt markers for 62 days with a separate lifecycle rule;
+never remove them to retry a failed run. Account-wide usage and unrelated manual
+requests remain outside the CLI's limits.
 
 The intended schedule is `0 19 * * *` UTC (03:00 Asia/Taipei the following day),
 plus manual dispatch. GitHub can delay scheduled runs; it is not an exact-time
