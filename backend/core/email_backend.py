@@ -1,4 +1,4 @@
-"""CM transactional mail through Resend's HTTPS API."""
+"""CM transactional mail through HTTPS provider APIs."""
 
 import json
 import logging
@@ -64,6 +64,54 @@ class ResendEmailBackend(BaseEmailBackend):
                 # Never log request bodies, provider messages, tokens or credentials.
                 status = error.code if isinstance(error, HTTPError) else "transport_or_response"
                 logger.warning("Resend delivery failed (%s)", status)
+                if self.fail_silently:
+                    continue
+                raise EmailDeliveryUnavailable() from None
+            sent += 1
+        return sent
+
+
+class BrevoEmailBackend(BaseEmailBackend):
+    def send_messages(self, email_messages):
+        sent = 0
+        for message in email_messages:
+            name, address = parseaddr(message.from_email)
+            if not settings.BREVO_API_KEY or not address or not message.to:
+                logger.warning("Brevo delivery blocked by configuration")
+                if self.fail_silently:
+                    continue
+                raise EmailDeliveryUnavailable()
+            request = urllib.request.Request(
+                "https://api.brevo.com/v3/smtp/email",
+                data=json.dumps(
+                    {
+                        "sender": {"name": name or "CM", "email": address},
+                        "to": [{"email": recipient} for recipient in message.to],
+                        "subject": message.subject,
+                        "textContent": message.body,
+                    }
+                ).encode("utf-8"),
+                headers={
+                    "api-key": settings.BREVO_API_KEY,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "User-Agent": "CM/1.0",
+                },
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=settings.EMAIL_TIMEOUT) as response:
+                    result = json.load(response)
+                if (
+                    not isinstance(result, dict)
+                    or not isinstance(result.get("messageId"), str)
+                    or not result["messageId"].strip()
+                ):
+                    raise ValueError("Missing message ID")
+            except (OSError, ValueError, HTTPException) as error:
+                # Never log provider bodies, action tokens, recipients or credentials.
+                status = error.code if isinstance(error, HTTPError) else "transport_or_response"
+                logger.warning("Brevo delivery failed (%s)", status)
                 if self.fail_silently:
                     continue
                 raise EmailDeliveryUnavailable() from None

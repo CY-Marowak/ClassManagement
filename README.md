@@ -68,7 +68,7 @@ PowerShell 必須使用 `$env:`；`set CM_FRONTEND_URL=...` 是 CMD 語法。IP 
 
 將 Email 換成你剛註冊的地址；忘記密碼時把 `verify` 換成 `reset`。開啟連結後，按畫面按鈕確認。連結 30 分鐘內有效、只能使用一次；重新寄送會讓舊連結失效。
 
-Email 不需要真實存在就能本機試用。正式模式採 Resend HTTPS API；需配置私密 API key、寄件地址與測試收件限制，再部署驗證實際收信。目前先用 resend.dev 僅寄本人 Resend 帳號信箱，不代表其他老師已能註冊。部署與資料庫設定見 [DEPLOYMENT.md](DEPLOYMENT.md)。不要把 `.local`、`.env` 或 `.venv` 提交到 Git。
+Email 不需要真實存在就能本機試用。正式模式預設採 Resend HTTPS API；另已提供 Brevo HTTPS adapter，透過 `CM_EMAIL_BACKEND=core.email_backend.BrevoEmailBackend`、私密 `CM_BREVO_API_KEY` 與已驗證 `CM_FROM_EMAIL` 切換。現有線上 Resend 仍僅寄本人；Brevo 必須完成配置、部署與外部收件驗收後，才代表其他老師可註冊。部署與資料庫設定見 [DEPLOYMENT.md](DEPLOYMENT.md)。不要把 `.local`、`.env` 或 `.venv` 提交到 Git。
 
 ## 如何永久刪除班級
 

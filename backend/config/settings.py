@@ -110,6 +110,7 @@ EMAIL_HOST_PASSWORD = os.environ.get("CM_EMAIL_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("CM_EMAIL_TLS", "1") == "1"
 EMAIL_TIMEOUT = 10
 RESEND_API_KEY = os.environ.get("CM_RESEND_API_KEY", "")
+BREVO_API_KEY = os.environ.get("CM_BREVO_API_KEY", "")
 RESEND_TEST_RECIPIENT = os.environ.get("CM_RESEND_TEST_RECIPIENT", "").strip().lower()
 DEFAULT_FROM_EMAIL = os.environ.get("CM_FROM_EMAIL", "CM <noreply@example.com>")
 LANGUAGE_CODE = "zh-hant"

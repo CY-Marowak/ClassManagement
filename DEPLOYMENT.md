@@ -60,7 +60,41 @@ Use the seeded verified teacher accounts until the Resend settings below have
 been deployed and actual receipt has been verified. Do not enable DEBUG to work
 around missing email.
 
-## Resend verification and password reset
+## Brevo verification and password reset (pilot)
+
+The pilot adapter uses `POST https://api.brevo.com/v3/smtp/email` over HTTPS.
+Select it explicitly; the existing production default remains Resend until the
+deployment settings are changed. Local DEBUG still defaults to file-based mail.
+
+Set these private environment variables on Render after the reviewed code is deployed:
+
+- `CM_EMAIL_BACKEND=core.email_backend.BrevoEmailBackend`.
+- `CM_BREVO_API_KEY`: a dedicated Brevo API key in Render secrets (not an SMTP key).
+- `CM_FROM_EMAIL=CY <blackthunder6207@gmail.com>`: the active sender verified on
+  2026-10-27. Brevo may rewrite free-email sender domains; verify actual receipt.
+- Keep `CM_FRONTEND_URL` at the public HTTPS origin.
+
+The ChatGPT Brevo plugin connection does not configure the application's key.
+Enter credentials directly into platform secrets; never paste them into chat,
+source files or logs. This adapter sends to the requesting teacher's address;
+the legacy `CM_RESEND_TEST_RECIPIENT` only applies to the Resend adapter.
+No Brevo templates, marketing lists or contact imports are needed.
+
+Provider failures (including quota rejection), missing credentials, malformed
+acceptance and timeouts return safe JSON 503 and roll back token issuance.
+Previously valid links survive a failed resend. Requests have a 10-second timeout
+and no automatic retry; ambiguous failures may deliver an unusable rolled-back
+link. A message ID means API acceptance, not successful inbox delivery.
+
+Before inviting teachers, use a user-selected external mailbox to verify the
+registration and password-reset checklist below. The Brevo dashboard test alone
+does not verify CM's public links. Check account quota before the trial and do
+not enable a paid upgrade. Rollback: restore the previous Resend backend and
+sender settings, keeping its owner-only recipient restriction and key.
+
+Official API contract: https://developers.brevo.com/reference/send-transac-email
+
+## Resend verification and password reset (existing deployment / rollback)
 
 Production defaults to `core.email_backend.ResendEmailBackend`, using HTTPS
 `POST https://api.resend.com/emails`; it does not require SMTP ports. Local DEBUG
