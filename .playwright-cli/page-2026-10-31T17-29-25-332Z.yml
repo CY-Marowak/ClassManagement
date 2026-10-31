@@ -1,0 +1,81 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - text: CM / VISUAL STUDY 01
+    - heading "一起長大的農場夥伴" [level=1] [ref=e4]
+    - paragraph [ref=e5]: 兩位夥伴、三個成長階段。先看看你喜歡的模樣。
+    - generic [ref=e6]: 獨立樣本 · 操作不影響正式資料
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - heading "貓夥伴" [level=2] [ref=e10]
+        - status [ref=e11]: Lv.1 · 幼年 · 1.00 倍
+      - generic "農場動作預覽" [ref=e12]:
+        - generic [ref=e17]: ✿
+        - generic [ref=e18]: ✿
+        - img "貓幼年吉祥物" [ref=e22]
+        - generic [ref=e44]: OUR LITTLE FARM
+      - status [ref=e45]: 待機中，試試讓夥伴散步。
+    - complementary [ref=e46]:
+      - heading "樣本控制" [level=2] [ref=e47]
+      - generic [ref=e48]:
+        - text: 代表動物
+        - combobox "代表動物" [ref=e49]:
+          - option "貓 · 既有種類" [selected]
+          - option "牛 · 新增種類"
+      - generic [ref=e50]:
+        - text: 成長等級
+        - combobox "成長等級" [ref=e51]:
+          - option "1" [selected]
+          - option "4"
+          - option "5"
+          - option "9"
+          - option "10"
+          - option "20"
+          - option "21"
+          - option "22"
+      - generic [ref=e52]:
+        - button "待機" [pressed] [ref=e53] [cursor=pointer]
+        - button "走動" [ref=e54] [cursor=pointer]
+      - button "預覽餵食成功" [ref=e55] [cursor=pointer]
+      - button "預覽餵食失敗" [ref=e56] [cursor=pointer]
+      - generic [ref=e57]:
+        - checkbox "靜態模式" [ref=e58]
+        - text: 靜態模式
+      - paragraph [ref=e59]: 同階段每級增加初始尺寸的 3%；Lv.21 起固定為 1.60 倍。此處可查看所有樣本，正式養成不預告未解鎖造型。
+  - generic [ref=e60]:
+    - generic [ref=e61]:
+      - heading "學生形象" [level=2] [ref=e62]
+      - paragraph [ref=e63]: 靜態角色，和班級夥伴使用相同美術語言。
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - img "貓學生角色" [ref=e66]
+        - paragraph [ref=e83]: 貓角色
+      - generic [ref=e84]:
+        - img "牛學生角色" [ref=e85]
+        - paragraph [ref=e102]: 牛角色
+  - generic [ref=e103]:
+    - generic [ref=e104]:
+      - heading "成長對照" [level=2] [ref=e105]
+      - paragraph [ref=e106]: 共用腳底與可見高度基準，換階段不縮小。
+    - generic [ref=e107]:
+      - generic [ref=e108]:
+        - img "貓幼年吉祥物" [ref=e110]
+        - paragraph [ref=e132]:
+          - strong [ref=e133]: Lv.1 · 幼年
+          - text: 1.00 倍
+      - generic [ref=e134]:
+        - img "貓成長期吉祥物" [ref=e136]
+        - paragraph [ref=e159]:
+          - strong [ref=e160]: Lv.5 · 成長期
+          - text: 1.12 倍
+      - generic [ref=e161]:
+        - img "貓成熟吉祥物" [ref=e163]
+        - paragraph [ref=e187]:
+          - strong [ref=e188]: Lv.10 · 成熟
+          - text: 1.27 倍
+      - generic [ref=e189]:
+        - img "貓成熟吉祥物" [ref=e191]
+        - paragraph [ref=e215]:
+          - strong [ref=e216]: Lv.21 · 成熟
+          - text: 1.60 倍
+  - generic [ref=e217]: 原創 SVG 向量樣本 · 圓潤輪廓 / 暖色描邊 / 草地農場這是待確認的美術提案，尚未替換線上角色。

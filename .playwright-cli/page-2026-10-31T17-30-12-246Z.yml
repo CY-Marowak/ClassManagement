@@ -1,0 +1,81 @@
+- main [ref=f1e2]:
+  - generic [ref=f1e3]:
+    - text: CM / VISUAL STUDY 01
+    - heading "一起長大的農場夥伴" [level=1] [ref=f1e4]
+    - paragraph [ref=f1e5]: 兩位夥伴、三個成長階段。先看看你喜歡的模樣。
+    - generic [ref=f1e6]: 獨立樣本 · 操作不影響正式資料
+  - generic [ref=f1e7]:
+    - generic [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - heading "牛夥伴" [level=2] [ref=f1e218]
+        - status [ref=f1e11]: Lv.21 · 成熟 · 1.60 倍
+      - generic "農場動作預覽" [ref=f1e12]:
+        - generic [ref=f1e17]: ✿
+        - generic [ref=f1e18]: ✿
+        - img "牛成熟吉祥物" [ref=f1e350]
+        - generic [ref=f1e44]: OUR LITTLE FARM
+      - status [ref=f1e45]: 待機中，試試讓夥伴散步。
+    - complementary [ref=f1e46]:
+      - heading "樣本控制" [level=2] [ref=f1e47]
+      - generic [ref=f1e48]:
+        - text: 代表動物
+        - combobox "代表動物" [ref=f1e49]:
+          - option "貓 · 既有種類"
+          - option "牛 · 新增種類" [selected]
+      - generic [ref=f1e50]:
+        - text: 成長等級
+        - combobox "成長等級" [ref=f1e51]:
+          - option "1"
+          - option "4"
+          - option "5"
+          - option "9"
+          - option "10"
+          - option "20"
+          - option "21" [selected]
+          - option "22"
+      - generic [ref=f1e52]:
+        - button "待機" [pressed] [ref=f1e53] [cursor=pointer]
+        - button "走動" [ref=f1e54] [cursor=pointer]
+      - button "預覽餵食成功" [ref=f1e55] [cursor=pointer]
+      - button "預覽餵食失敗" [ref=f1e56] [cursor=pointer]
+      - generic [ref=f1e57]:
+        - checkbox "靜態模式" [ref=f1e58]
+        - text: 靜態模式
+      - paragraph [ref=f1e59]: 同階段每級增加初始尺寸的 3%；Lv.21 起固定為 1.60 倍。此處可查看所有樣本，正式養成不預告未解鎖造型。
+  - generic [ref=f1e60]:
+    - generic [ref=f1e61]:
+      - heading "學生形象" [level=2] [ref=f1e62]
+      - paragraph [ref=f1e63]: 靜態角色，和班級夥伴使用相同美術語言。
+    - generic [ref=f1e64]:
+      - generic [ref=f1e65]:
+        - img "貓學生角色" [ref=f1e66]
+        - paragraph [ref=f1e83]: 貓角色
+      - generic [ref=f1e84]:
+        - img "牛學生角色" [ref=f1e85]
+        - paragraph [ref=f1e102]: 牛角色
+  - generic [ref=f1e103]:
+    - generic [ref=f1e104]:
+      - heading "成長對照" [level=2] [ref=f1e105]
+      - paragraph [ref=f1e106]: 共用腳底與可見高度基準，換階段不縮小。
+    - generic [ref=f1e107]:
+      - generic [ref=f1e374]:
+        - img "牛幼年吉祥物" [ref=f1e376]
+        - paragraph [ref=f1e398]:
+          - strong [ref=f1e399]: Lv.1 · 幼年
+          - text: 1.00 倍
+      - generic [ref=f1e400]:
+        - img "牛成長期吉祥物" [ref=f1e402]
+        - paragraph [ref=f1e425]:
+          - strong [ref=f1e426]: Lv.5 · 成長期
+          - text: 1.12 倍
+      - generic [ref=f1e427]:
+        - img "牛成熟吉祥物" [ref=f1e429]
+        - paragraph [ref=f1e453]:
+          - strong [ref=f1e454]: Lv.10 · 成熟
+          - text: 1.27 倍
+      - generic [ref=f1e455]:
+        - img "牛成熟吉祥物" [ref=f1e457]
+        - paragraph [ref=f1e481]:
+          - strong [ref=f1e482]: Lv.21 · 成熟
+          - text: 1.60 倍
+  - generic [ref=f1e217]: 原創 SVG 向量樣本 · 圓潤輪廓 / 暖色描邊 / 草地農場這是待確認的美術提案，尚未替換線上角色。
