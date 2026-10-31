@@ -362,11 +362,6 @@ footer {
     transform: rotate(-3deg) translateY(2px);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-  }
-}
 @media (max-width: 740px) {
   main {
     padding: 25px 16px;

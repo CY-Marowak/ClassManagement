@@ -40,13 +40,20 @@ function artwork(animal, stage = 0, portrait = false) {
 let mode = "idle";
 let feedingTimer;
 const motionPreference = matchMedia("(prefers-reduced-motion: reduce)");
+let motionChosen = false;
 $("static").checked = motionPreference.matches;
 function applyMotion() {
-  document.body.classList.toggle(
-    "static",
-    $("static").checked || motionPreference.matches,
-  );
+  document.body.classList.toggle("static", $("static").checked);
   document.body.classList.toggle("paused", document.hidden);
+  $("motion-status").textContent = $("static").checked
+    ? "目前為靜態模式；按「走動」可主動播放動畫。"
+    : "動畫已開啟；勾選「靜態模式」可停止。";
+}
+function playMode(next, message) {
+  motionChosen = true;
+  $("static").checked = false;
+  applyMotion();
+  setMode(next, message);
 }
 function setMode(next, message) {
   clearTimeout(feedingTimer);
@@ -81,12 +88,12 @@ $("portraits").innerHTML = Object.keys(names)
   .join("");
 $("animal").addEventListener("change", render);
 $("level").addEventListener("change", render);
-$("idle").addEventListener("click", () => setMode("idle", "待機中。"));
+$("idle").addEventListener("click", () => playMode("idle", "待機中。"));
 $("walk").addEventListener("click", () =>
-  setMode("walk", "散步中：小步往返、雙腳交替擺動。"),
+  playMode("walk", "散步中：小步往返、雙腳交替擺動。"),
 );
 $("feed").addEventListener("click", () => {
-  setMode("feed", "樣本餵食成功：夥伴吃點心！正式點數與經驗值不變。");
+  playMode("feed", "樣本餵食成功：夥伴吃點心！正式點數與經驗值不變。");
   feedingTimer = setTimeout(
     () => setMode("idle", "餵食反應結束，回到待機。"),
     2000,
@@ -95,8 +102,14 @@ $("feed").addEventListener("click", () => {
 $("fail").addEventListener("click", () =>
   setMode("idle", "樣本餵食失敗：不播放成功反應，數值保持不變。"),
 );
-$("static").addEventListener("change", applyMotion);
-motionPreference.addEventListener("change", applyMotion);
+$("static").addEventListener("change", () => {
+  motionChosen = true;
+  applyMotion();
+});
+motionPreference.addEventListener("change", () => {
+  if (!motionChosen) $("static").checked = motionPreference.matches;
+  applyMotion();
+});
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && mode === "feed") setMode("idle", "已回到待機。");
   applyMotion();
