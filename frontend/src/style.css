@@ -273,6 +273,64 @@ textarea:focus {
   height: 180px;
   margin: 15px auto 24px;
 }
+.role-collection {
+  text-align: left;
+}
+.role-collection > h1,
+.role-collection > .eyebrow,
+.role-collection > .muted {
+  text-align: center;
+}
+.role-collection h2 {
+  margin-top: 30px;
+}
+.current-role {
+  text-align: center;
+  padding: 12px;
+  margin: 20px 0;
+  background: #eef3e8;
+  border-radius: 20px;
+}
+.student-home .current-role .animal-avatar {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto;
+}
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+.role-card {
+  min-width: 0;
+  text-align: center;
+  border: 1px solid #dce5d7;
+  border-radius: 16px;
+  padding: 12px 8px;
+  background: #fffdf7;
+}
+.role-card h3 {
+  margin: 6px 0 10px;
+  font-size: 18px;
+}
+.student-home .role-card .animal-avatar {
+  width: 100%;
+  max-width: 100px;
+  height: 110px;
+  margin: 0 auto;
+}
+.role-card button {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 5px;
+}
+@media (max-width: 400px) {
+  .role-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .student-cohort {
   font-size: 23px;
   font-weight: 600;

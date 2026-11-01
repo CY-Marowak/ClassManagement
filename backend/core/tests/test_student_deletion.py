@@ -1,7 +1,7 @@
 from django.contrib.sessions.models import Session
 from rest_framework.test import APIClient, APITestCase
 
-from core.models import ClassMember, Student, StudentAuditEvent, User
+from core.models import ClassMember, Student, StudentAuditEvent, StudentRoleOwnership, User
 
 
 class StudentDeletionTests(APITestCase):
@@ -74,6 +74,11 @@ class StudentDeletionTests(APITestCase):
             ).status_code,
             200,
         )
+        self.assertFalse(
+            StudentRoleOwnership.objects.filter(student_id=self.removed["id"]).exists()
+        )
+        self.assertEqual(StudentRoleOwnership.objects.count(), 2)
+        self.assertTrue(StudentRoleOwnership.objects.filter(student_id=self.kept["id"]).exists())
         self.assertFalse(Student.objects.filter(pk=self.removed["id"]).exists())
         self.assertFalse(User.objects.filter(pk=user_id).exists())
         self.assertFalse(StudentAuditEvent.objects.filter(student_id=self.removed["id"]).exists())

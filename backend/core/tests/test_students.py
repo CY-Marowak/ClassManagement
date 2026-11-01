@@ -193,6 +193,9 @@ class StudentWorkflowTests(APITestCase):
             f"/api/classes/{self.cohort['id']}/", {"confirmation_name": "向日葵班"}, format="json"
         )
         self.assertEqual(response.status_code, 200)
+        Ownership = apps.get_model("core", "StudentRoleOwnership")
+        self.assertFalse(Ownership.objects.filter(student_id=student_id).exists())
+        self.assertEqual(Ownership.objects.count(), 1)
         self.assertFalse(Student.objects.filter(pk=student_id).exists())
         self.assertFalse(User.objects.filter(pk=user_id).exists())
         self.assertFalse(
@@ -246,7 +249,27 @@ class StudentWorkflowTests(APITestCase):
         roster = self.client.get(self.roster_url).json()
         self.assertEqual([s["seat_number"] for s in roster], list(range(1, 29)))
         self.assertEqual(roster[0]["student_number"], "00001")
-        self.assertTrue(all(s["avatar"] in ("cat", "dog", "rabbit") for s in roster))
+        self.assertTrue(
+            all(
+                s["avatar"]
+                in (
+                    "rat",
+                    "cow",
+                    "tiger",
+                    "rabbit",
+                    "dragon",
+                    "snake",
+                    "horse",
+                    "goat",
+                    "monkey",
+                    "rooster",
+                    "dog",
+                    "pig",
+                    "cat",
+                )
+                for s in roster
+            )
+        )
         replay = self.client.post(self.roster_url, {"text": text}, format="json").json()
         self.assertEqual(replay["summary"], {"created": 0, "skipped": 28, "error": 2})
         self.assertEqual(self.client.get(self.roster_url).json(), roster)

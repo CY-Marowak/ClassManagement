@@ -6,6 +6,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Lower
 
+from .role_catalog import StudentRole
+
 
 class User(AbstractUser):
     username = models.CharField(max_length=150, unique=True, default=uuid.uuid4)
@@ -124,9 +126,7 @@ class Student(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(9999)]
     )
     student_number = models.CharField(max_length=64)
-    avatar = models.CharField(
-        max_length=10, choices=[("cat", "貓"), ("dog", "狗"), ("rabbit", "兔")]
-    )
+    avatar = models.CharField(max_length=10, choices=StudentRole.choices)
     must_change_password = models.BooleanField(default=True)
 
     class Meta:
@@ -141,6 +141,19 @@ class Student(models.Model):
             models.CheckConstraint(
                 condition=models.Q(seat_number__gte=1, seat_number__lte=9999),
                 name="student_seat_range",
+            ),
+        ]
+
+
+class StudentRoleOwnership(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="owned_roles")
+    role = models.CharField(max_length=10, choices=StudentRole.choices)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["student", "role"], name="one_role_per_student"),
+            models.CheckConstraint(
+                condition=models.Q(role__in=StudentRole.values), name="valid_student_role"
             ),
         ]
 

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api, type StudentProfile, type StudentSession } from "./api";
-import { AnimalAvatar } from "./AnimalAvatar";
+import { StudentAvatar } from "./StudentAvatar";
+import { RoleCollection } from "./RoleCollection";
+import type { StudentRole } from "./studentRoles";
 import { ScoreHistory } from "./ScoreHistory";
 import { Mascot } from "./Mascot";
 import { Announcements } from "./Announcements";
@@ -149,6 +151,10 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [feeding, setFeeding] = useState(false);
+  const [collecting, setCollecting] = useState(false);
+  const updateRole = useCallback((avatar: StudentRole) => {
+    setProfile((old) => (old ? { ...old, avatar } : old));
+  }, []);
   const [readingAnnouncement, setReadingAnnouncement] = useState(false);
   const updateBalance = useCallback((balance: number) => {
     setProfile((old) => (old ? { ...old, point_balance: balance } : old));
@@ -188,7 +194,13 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             {error}
           </p>
         )}
-        {profile && feeding ? (
+        {profile && collecting ? (
+          <RoleCollection
+            onBack={() => setCollecting(false)}
+            onSelected={updateRole}
+            onBusy={setBusy}
+          />
+        ) : profile && feeding ? (
           <Mascot
             cohortId={profile.cohort.id}
             studentId={profile.id}
@@ -207,10 +219,13 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             <div hidden={readingAnnouncement}>
               <p className="eyebrow">我的班級</p>
               <p className="student-cohort">{profile.cohort.name}</p>
-              <AnimalAvatar animal={profile.avatar} />
+              <StudentAvatar animal={profile.avatar} />
               <h1>{profile.name}</h1>
               <p className="badge">座號 {profile.seat_number}</p>
-              <p className="muted">這是你的固定動物夥伴，一起開始班級日常。</p>
+              <p className="muted">帶著你的動物夥伴，一起開始班級日常。</p>
+              <button className="secondary" onClick={() => setCollecting(true)}>
+                我的角色收藏
+              </button>
             </div>
             <Announcements onReadingChange={setReadingAnnouncement} />
             <div hidden={readingAnnouncement}>

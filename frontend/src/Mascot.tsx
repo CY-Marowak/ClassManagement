@@ -6,11 +6,11 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { api, ApiError, type Student } from "./api";
-import { AnimalAvatar, animalNames } from "./AnimalAvatar";
+import { api, ApiError } from "./api";
+import { AnimalAvatar, animalNames, type MascotAnimal } from "./AnimalAvatar";
 
 type MascotState = {
-  animal: Student["avatar"];
+  animal: MascotAnimal;
   exp: number;
   level: number;
   level_start_exp: number;

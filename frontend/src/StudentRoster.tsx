@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, type Cohort, type Student } from "./api";
-import { AnimalAvatar } from "./AnimalAvatar";
+import { StudentAvatar } from "./StudentAvatar";
 import { StudentManagementDialog } from "./StudentManagementDialog";
 import { StudentAuditHistory } from "./StudentAuditHistory";
 import { DeleteStudentDialog } from "./DeleteStudentDialog";
@@ -291,7 +291,7 @@ export function StudentRoster({
                     <td>{student.name}</td>
                     <td>{student.student_number}</td>
                     <td>
-                      <AnimalAvatar animal={student.avatar} />
+                      <StudentAvatar animal={student.avatar} />
                     </td>
                     <td>
                       <div className="student-actions">

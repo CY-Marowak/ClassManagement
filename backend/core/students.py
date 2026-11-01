@@ -11,8 +11,17 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ClassMember, Cohort, Student, StudentAuditEvent, StudentImportIssue, User
+from .models import (
+    ClassMember,
+    Cohort,
+    Student,
+    StudentAuditEvent,
+    StudentImportIssue,
+    StudentRoleOwnership,
+    User,
+)
 from .permissions import IsReadyUser, IsStudent, IsTeacher
+from .role_catalog import StudentRole
 from .throttling import consume
 from .views import PublicAuthView, user_data
 
@@ -81,8 +90,9 @@ def import_student_row(cohort, actor, number, line):
                     user=user,
                     seat_number=values["seat_number"],
                     student_number=values["student_number"],
-                    avatar=secrets.choice(["cat", "dog", "rabbit"]),
+                    avatar=secrets.choice(StudentRole.values),
                 )
+                StudentRoleOwnership.objects.create(student=student, role=student.avatar)
                 StudentAuditEvent.objects.create(
                     student=student,
                     actor=actor,

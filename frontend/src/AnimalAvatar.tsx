@@ -1,9 +1,8 @@
-import type { Student } from "./api";
-
 export const animalNames = { cat: "貓", dog: "狗", rabbit: "兔" };
+export type MascotAnimal = keyof typeof animalNames;
 
 // Original geometric artwork made for CM; no external icon paths or image assets.
-export function AnimalAvatar({ animal }: { animal: Student["avatar"] }) {
+export function AnimalAvatar({ animal }: { animal: MascotAnimal }) {
   return (
     <svg
       className="animal-avatar"

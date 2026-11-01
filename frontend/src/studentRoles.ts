@@ -1,0 +1,16 @@
+export const studentRoleNames = {
+  rat: "鼠",
+  cow: "牛",
+  tiger: "虎",
+  rabbit: "兔",
+  dragon: "龍",
+  snake: "蛇",
+  horse: "馬",
+  goat: "羊",
+  monkey: "猴",
+  rooster: "雞",
+  dog: "狗",
+  pig: "豬",
+  cat: "貓",
+} as const;
+export type StudentRole = keyof typeof studentRoleNames;

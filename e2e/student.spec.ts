@@ -120,7 +120,66 @@ test("teacher imports and corrects roster; student changes password, keeps avata
   ).toBeVisible();
   await expect(student.getByText("星光班", { exact: true })).toBeVisible();
   await expect(student.getByText("同學2", { exact: true })).toHaveCount(0);
-  const avatar = await student.getByRole("img").getAttribute("aria-label");
+  let avatar = await student.getByRole("img").getAttribute("aria-label");
+  await student.getByRole("button", { name: "我的角色收藏" }).click();
+  const collection = student.getByRole("region", { name: "我的角色收藏" });
+  await expect(
+    collection.getByRole("heading", { name: "全部角色 · 13 種" }),
+  ).toBeVisible();
+  await expect(
+    collection.getByRole("list", { name: "全部角色" }).getByRole("listitem"),
+  ).toHaveCount(13);
+  await expect(
+    collection.getByRole("list", { name: "已擁有角色" }).getByRole("listitem"),
+  ).toHaveCount(1);
+  await expect(
+    collection.getByRole("button", { name: "目前使用中" }),
+  ).toBeDisabled();
+  await expect(collection.getByText("尚未擁有", { exact: true })).toHaveCount(
+    12,
+  );
+  await student.setViewportSize({ width: 1280, height: 1000 });
+  await student.screenshot({
+    path: ".local/v2-02-collection-desktop.png",
+    fullPage: true,
+  });
+  await student.setViewportSize({ width: 390, height: 844 });
+  await student.screenshot({
+    path: ".local/v2-02-collection-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await student.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  // Fixture for an already-owned second role; this ticket has no purchase/grant endpoint.
+  const profile = await (await student.request.get("/api/student/me/")).json();
+  const alternate = profile.avatar === "dragon" ? "cow" : "dragon";
+  const alternateName = alternate === "dragon" ? "龍" : "牛";
+  execFileSync(
+    python,
+    [
+      "backend/manage.py",
+      "shell",
+      "-c",
+      `from core.models import StudentRoleOwnership; StudentRoleOwnership.objects.get_or_create(student_id=${Number(profile.id)}, role='${alternate}')`,
+    ],
+    { env: { ...process.env, CM_DEBUG: "1" }, windowsHide: true },
+  );
+  await collection.getByRole("button", { name: "更新收藏" }).click();
+  await expect(
+    collection.getByRole("list", { name: "已擁有角色" }).getByRole("listitem"),
+  ).toHaveCount(2);
+  await collection
+    .getByRole("button", { name: `換上${alternateName}` })
+    .click();
+  await expect(collection.getByRole("status")).toContainText(
+    `已換上${alternateName}角色`,
+  );
+  avatar = `${alternateName}角色`;
+  await collection.getByRole("button", { name: "返回我的頁面" }).click();
+  await expect(student.getByRole("img")).toHaveAttribute("aria-label", avatar);
   await student.screenshot({
     path: ".local/student-desktop.png",
     fullPage: true,

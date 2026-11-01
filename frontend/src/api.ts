@@ -1,3 +1,5 @@
+import type { StudentRole } from "./studentRoles";
+
 export type Teacher = {
   account_type: "teacher";
   id: number;
@@ -24,7 +26,7 @@ export type Student = {
   name: string;
   seat_number: number;
   student_number: string;
-  avatar: "cat" | "dog" | "rabbit";
+  avatar: StudentRole;
 };
 export type StudentProfile = Student & {
   cohort: { id: number; name: string };
@@ -32,6 +34,7 @@ export type StudentProfile = Student & {
 };
 
 const fieldNames: Record<string, string> = {
+  role: "角色",
   title: "公告標題",
   body: "內文",
   points: "點數",

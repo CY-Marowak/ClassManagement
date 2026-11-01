@@ -14,6 +14,7 @@ from core.memberships import (
     TeacherEventsView,
     TeachersView,
 )
+from core.role_collection import StudentRolesView
 from core.score_changes import ScoreChangesView, ScoreEditPreviewView
 from core.scores import ScoreEventsView, ScoreRosterView, ScoresView, StudentScoresView
 from core.student_management import ResetStudentPasswordView, StudentDetailView, StudentEventsView
@@ -23,6 +24,7 @@ from django.urls import path
 from .deployment import health
 
 urlpatterns = [
+    path("api/student/roles/", StudentRolesView.as_view()),
     path("healthz", health),
     path("api/classes/<int:pk>/import-issues/", ImportIssuesView.as_view()),
     path("api/classes/<int:pk>/import-issues/<int:issue_id>/", ResolveImportIssueView.as_view()),
