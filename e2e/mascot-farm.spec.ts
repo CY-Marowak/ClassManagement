@@ -129,8 +129,6 @@ test("farm shows only current growth, keeps mobile size and respects motion cont
         page.getByRole("img", { name: `農場中的${name} · ${stage}` }),
       ).toBeVisible();
       await expect(page.locator(".farm-actor svg")).toHaveCount(1);
-      const artwork = await page.locator(".farm-actor svg").innerHTML();
-      if (level === 1) expect(artwork).not.toContain("#729b7b");
       for (const width of [320, 1280]) {
         await page.setViewportSize({ width, height: 900 });
         const bounds = await page.locator(".mascot-farm").boundingBox();

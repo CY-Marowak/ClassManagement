@@ -89,13 +89,18 @@
   width: 100%;
   height: 100%;
 }
+.farm-reaction {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 100%;
+}
 .farm-leg {
   transform-box: fill-box;
   transform-origin: center top;
   animation: farm-leg 12s ease-in-out infinite;
 }
 .farm-leg-back {
-  animation-direction: reverse;
+  --leg-direction: -1;
 }
 .farm-treat,
 .farm-heart {
@@ -105,6 +110,9 @@
   animation-play-state: paused;
 }
 .farm-feeding .farm-actor {
+  animation-play-state: paused;
+}
+.farm-feeding .farm-reaction {
   animation: farm-nibble 0.32s ease-in-out infinite;
 }
 .farm-feeding .farm-leg {
@@ -212,7 +220,7 @@
   90%,
   94%,
   98% {
-    transform: rotate(10deg);
+    transform: rotate(calc(10deg * var(--leg-direction, 1)));
   }
   30%,
   34%,
@@ -224,7 +232,7 @@
   88%,
   92%,
   96% {
-    transform: rotate(-10deg);
+    transform: rotate(calc(-10deg * var(--leg-direction, 1)));
   }
 }
 @keyframes farm-nibble {

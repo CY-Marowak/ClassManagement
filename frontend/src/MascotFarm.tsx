@@ -98,11 +98,13 @@ export function MascotFarm({
             style={{ "--growth-scale": scale } as CSSProperties}
           >
             <div className="farm-actor">
-              <ArtBoundary>
-                <Suspense fallback={fallback}>
-                  <Artwork animal={animal} stage={stage} />
-                </Suspense>
-              </ArtBoundary>
+              <div className="farm-reaction">
+                <ArtBoundary>
+                  <Suspense fallback={fallback}>
+                    <Artwork animal={animal} stage={stage} />
+                  </Suspense>
+                </ArtBoundary>
+              </div>
             </div>
           </div>
         </div>
