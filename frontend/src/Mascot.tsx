@@ -8,6 +8,7 @@ import {
 } from "react";
 import { api, ApiError } from "./api";
 import { AnimalAvatar, animalNames, type MascotAnimal } from "./AnimalAvatar";
+import { studentRoleNames, type StudentRole } from "./studentRoles";
 
 type MascotState = {
   animal: MascotAnimal;
@@ -19,7 +20,8 @@ type MascotState = {
 };
 type PointEntry = {
   id: number;
-  kind: "award" | "feed";
+  kind: "award" | "feed" | "purchase";
+  role: StudentRole | null;
   points: number;
   created_at: string;
   source: {
@@ -288,7 +290,11 @@ export function Mascot({
                   <li className="point-transaction" key={entry.id}>
                     <div className="score-record-top">
                       <strong>
-                        {entry.kind === "award" ? "獲得點數" : "餵食吉祥物"}
+                        {entry.kind === "award"
+                          ? "獲得點數"
+                          : entry.kind === "purchase"
+                            ? `購買角色${entry.role ? ` · ${studentRoleNames[entry.role]}` : ""}`
+                            : "餵食吉祥物"}
                       </strong>
                       <strong>
                         {entry.points > 0 ? "+" : ""}

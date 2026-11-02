@@ -196,7 +196,16 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
         )}
         {profile && collecting ? (
           <RoleCollection
-            onBack={() => setCollecting(false)}
+            studentId={profile.id}
+            onBalance={updateBalance}
+            onBack={() => {
+              setCollecting(false);
+              setProfile(null);
+              setError("");
+              api<StudentProfile>("/student/me/")
+                .then(setProfile)
+                .catch((e) => setError(e.message));
+            }}
             onSelected={updateRole}
             onBusy={setBusy}
           />
@@ -238,7 +247,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
                     可用點數 <strong>{profile.point_balance}</strong>
                   </p>
                   <p className="muted small">
-                    點數可自由用來餵食，和分數分開計算。
+                    點數可用來餵食或收藏角色，和分數分開計算。
                   </p>
                   <div className="actions">
                     <button

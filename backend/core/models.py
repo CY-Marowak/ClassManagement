@@ -320,8 +320,11 @@ class PointAwardBatch(models.Model):
 
 class PointTransaction(models.Model):
     kind = models.CharField(
-        max_length=8, choices=[("award", "獲得點數"), ("feed", "餵食")], default="award"
+        max_length=8,
+        choices=[("award", "獲得點數"), ("feed", "餵食"), ("purchase", "購買角色")],
+        default="award",
     )
+    role = models.CharField(max_length=10, choices=StudentRole.choices, blank=True, default="")
     request_id = models.UUIDField(null=True, blank=True)
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="point_transactions"
@@ -346,6 +349,7 @@ class PointTransaction(models.Model):
                         batch__isnull=False,
                         record__isnull=False,
                         request_id__isnull=True,
+                        role="",
                     )
                     | models.Q(
                         kind="feed",
@@ -354,11 +358,25 @@ class PointTransaction(models.Model):
                         batch__isnull=True,
                         record__isnull=True,
                         request_id__isnull=False,
+                        role="",
+                    )
+                    | models.Q(
+                        kind="purchase",
+                        points=-20,
+                        batch__isnull=True,
+                        record__isnull=True,
+                        request_id__isnull=False,
+                        role__in=StudentRole.values,
                     )
                 ),
                 name="point_transaction_kind_range",
             ),
             models.UniqueConstraint(
                 fields=["student", "request_id"], name="student_feed_request_once"
+            ),
+            models.UniqueConstraint(
+                fields=["student", "role"],
+                condition=models.Q(kind="purchase"),
+                name="student_role_purchase_once",
             ),
         ]

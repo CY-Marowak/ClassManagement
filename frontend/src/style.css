@@ -1344,6 +1344,22 @@ small {
 .audit-changes dd {
   overflow-wrap: anywhere;
 }
+.purchase-confirmation {
+  padding: 24px;
+  margin: 20px 0;
+  border: 2px solid #87b4a2;
+  border-radius: 20px;
+  background: #f1f8f3;
+}
+.purchase-confirmation .animal-avatar {
+  width: 120px;
+  height: 120px;
+}
+.shop-balance {
+  padding: 12px;
+  background: #f1f8f3;
+  border-radius: 12px;
+}
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

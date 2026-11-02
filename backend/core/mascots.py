@@ -42,6 +42,7 @@ def transaction_data(entry):
     return {
         "id": entry.pk,
         "kind": entry.kind,
+        "role": entry.role or None,
         "points": entry.points,
         "created_at": entry.created_at.isoformat(),
         "source": {
@@ -122,7 +123,7 @@ class StudentMascotView(APIView):
             student = self.locked_student(request)
             existing = student.point_transactions.filter(request_id=values["request_id"]).first()
             if existing:
-                if existing.points != -values["points"]:
+                if existing.kind != "feed" or existing.points != -values["points"]:
                     raise serializers.ValidationError(
                         "這次餵食已完成，請勿以相同識別送出不同內容。"
                     )
