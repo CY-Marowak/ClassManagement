@@ -61,6 +61,7 @@ class RoleShopTests(APITestCase):
         self.award(19)
         role = self.unowned(student)[0]
         before = student.get("/api/student/roles/").json()
+        transactions = student.get("/api/student/mascot/").json()["transactions"]
         for changes in [
             {},
             {"price": 1},
@@ -70,7 +71,7 @@ class RoleShopTests(APITestCase):
             self.assertEqual(self.buy(student, role, **changes).status_code, 400)
         self.assertEqual(self.buy(student, "bear").status_code, 400)
         self.assertEqual(student.get("/api/student/roles/").json(), before)
-        self.assertEqual(PointTransaction.objects.count(), 1)
+        self.assertEqual(student.get("/api/student/mascot/").json()["transactions"], transactions)
 
     def test_purchase_requires_own_ready_session_and_csrf(self):
         initial = self.student_login(change=False)

@@ -159,6 +159,13 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
   const updateBalance = useCallback((balance: number) => {
     setProfile((old) => (old ? { ...old, point_balance: balance } : old));
   }, []);
+  function reloadProfile() {
+    setProfile(null);
+    setError("");
+    api<StudentProfile>("/student/me/")
+      .then(setProfile)
+      .catch((e) => setError(e.message));
+  }
   useEffect(() => {
     api<StudentProfile>("/student/me/")
       .then(setProfile)
@@ -200,11 +207,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             onBalance={updateBalance}
             onBack={() => {
               setCollecting(false);
-              setProfile(null);
-              setError("");
-              api<StudentProfile>("/student/me/")
-                .then(setProfile)
-                .catch((e) => setError(e.message));
+              reloadProfile();
             }}
             onSelected={updateRole}
             onBusy={setBusy}
@@ -216,11 +219,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             onBalance={updateBalance}
             onBack={() => {
               setFeeding(false);
-              setProfile(null);
-              setError("");
-              api<StudentProfile>("/student/me/")
-                .then(setProfile)
-                .catch((e) => setError(e.message));
+              reloadProfile();
             }}
           />
         ) : profile ? (
