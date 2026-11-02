@@ -10,7 +10,7 @@ export default function MascotArtwork({
   stage: number;
 }) {
   const fur = { cat: "#edc889", dog: "#d4b392", rabbit: "#fffaf0" }[animal];
-  const headY = [64, 61, 58][stage];
+  const headY = (animal === "rabbit" ? [72, 70, 68] : [64, 61, 58])[stage];
   return (
     <svg viewBox="0 0 120 140" aria-hidden="true">
       <ellipse cx="60" cy="130" rx="37" ry="5" fill="#61784d" opacity=".16" />
@@ -84,7 +84,7 @@ export default function MascotArtwork({
           cx="60"
           cy={headY}
           rx={[35, 33, 31][stage]}
-          ry="30"
+          ry={animal === "rabbit" ? 25 : 30}
           fill={fur}
         />
         {animal === "dog" && (
