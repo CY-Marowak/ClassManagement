@@ -7,7 +7,8 @@ import {
   type FormEvent,
 } from "react";
 import { api, ApiError } from "./api";
-import { AnimalAvatar, animalNames, type MascotAnimal } from "./AnimalAvatar";
+import { animalNames, type MascotAnimal } from "./AnimalAvatar";
+import { MascotFarm } from "./MascotFarm";
 import { studentRoleNames, type StudentRole } from "./studentRoles";
 
 type MascotState = {
@@ -61,6 +62,7 @@ export function Mascot({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [points, setPoints] = useState(1);
+  const [feedSignal, setFeedSignal] = useState(0);
   const readVersion = useRef(0);
   const storageKey = `cm-feed-${studentId}`;
   const [pending, setPending] = useState<FeedRequest | null>(() => {
@@ -138,6 +140,7 @@ export function Mascot({
   async function feed(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
+    setFeedSignal(0);
     readVersion.current++;
     const request = pending || { points, request_id: createRequestId() };
     setError("");
@@ -148,6 +151,7 @@ export function Mascot({
       sessionStorage.setItem(storageKey, JSON.stringify(request));
       setPending(request);
       await api<PointEntry>("/student/mascot/", "POST", request);
+      setFeedSignal((signal) => signal + 1);
       sessionStorage.removeItem(storageKey);
       setPending(null);
       setPoints(1);
@@ -207,16 +211,11 @@ export function Mascot({
       {loading && <p role="status">正在載入吉祥物…</p>}
       {mascot && (
         <div className="mascot-growth">
-          <div
-            className="mascot-art"
-            role="img"
-            aria-label={`班級${animalNames[mascot.animal]}吉祥物`}
-          >
-            <div aria-hidden="true">
-              <AnimalAvatar animal={mascot.animal} />
-            </div>
-            <span aria-hidden="true">✦</span>
-          </div>
+          <MascotFarm
+            animal={mascot.animal}
+            level={mascot.level}
+            feedSignal={feedSignal}
+          />
           <p className="eyebrow">全班共同養成</p>
           <h2>
             {animalNames[mascot.animal]}夥伴 · Lv.{mascot.level}

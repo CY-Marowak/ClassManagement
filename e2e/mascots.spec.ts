@@ -82,6 +82,7 @@ test("student sees points, feeds voluntarily, safely retries and shares class gr
     student.getByText("距下一級還需 100 exp", { exact: true }),
   ).toBeVisible();
   await expect(student.locator(".point-transaction")).toHaveCount(1);
+  await expect(student.locator(".farm-treat")).toHaveCSS("opacity", "0");
   await student.getByLabel("餵食點數").selectOption("2");
   await student.route(
     "**/api/student/mascot/",
@@ -95,6 +96,7 @@ test("student sees points, feeds voluntarily, safely retries and shares class gr
   );
   await student.getByRole("button", { name: "確認餵食", exact: true }).click();
   await expect(student.getByRole("alert")).toBeVisible();
+  await expect(student.locator(".farm-treat")).toHaveCSS("opacity", "0");
   await student.reload();
   await student.getByRole("button", { name: "餵食班級吉祥物" }).click();
   await student
@@ -183,6 +185,7 @@ test("student sees points, feeds voluntarily, safely retries and shares class gr
   await expect(
     empty.getByText("累積總餵食量 5 exp", { exact: true }),
   ).toBeVisible();
+  await expect(empty.locator(".farm-treat")).toHaveCSS("opacity", "0");
   await expect(
     empty.getByText("尚無點數交易。", { exact: true }),
   ).toBeVisible();

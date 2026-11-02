@@ -1,0 +1,242 @@
+.mascot-farm {
+  --farm-base: 140px;
+  height: 330px;
+  position: relative;
+  background: linear-gradient(#e7f3ee 0 53%, #c4d99e 53% 100%);
+  border-radius: 18px;
+  isolation: isolate;
+  overflow: hidden;
+}
+.farm-sun {
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  background: #f7d995;
+  border-radius: 50%;
+  right: 14%;
+  top: 26px;
+}
+.farm-cloud {
+  position: absolute;
+  width: 95px;
+  height: 24px;
+  background: #fffdf3;
+  border-radius: 40px;
+  left: 12%;
+  top: 53px;
+}
+.farm-hill {
+  position: absolute;
+  top: 110px;
+  left: -10%;
+  width: 120%;
+  height: 100px;
+  border-radius: 50% 50% 0 0;
+  background: #d6e4bb;
+}
+.farm-fence {
+  position: absolute;
+  top: 175px;
+  height: 40px;
+  width: 100%;
+  left: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 34px,
+    #faf2d9 34px 44px,
+    transparent 44px 66px
+  );
+  border-top: 8px solid #faf2d9;
+  border-bottom: 8px solid #faf2d9;
+}
+.farm-flower {
+  position: absolute;
+  color: #fff1c6;
+  font-size: 27px;
+  bottom: 25px;
+  right: 14%;
+}
+.farm-caption {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #466139;
+}
+.farm-traveller {
+  position: absolute;
+  bottom: 47px;
+  left: calc(50% - var(--farm-base) / 2);
+  width: var(--farm-base);
+  height: var(--farm-base);
+  animation: farm-travel 12s ease-in-out infinite;
+}
+.farm-size {
+  width: var(--farm-base);
+  height: var(--farm-base);
+  transform-origin: 50% 100%;
+  transform: scale(var(--growth-scale, 1));
+}
+.farm-actor {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 100%;
+  animation: farm-step 12s ease-in-out infinite;
+}
+.farm-actor svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.farm-leg {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: farm-leg 12s ease-in-out infinite;
+}
+.farm-leg-back {
+  animation-direction: reverse;
+}
+.farm-treat,
+.farm-heart {
+  opacity: 0;
+}
+.farm-feeding .farm-traveller {
+  animation-play-state: paused;
+}
+.farm-feeding .farm-actor {
+  animation: farm-nibble 0.32s ease-in-out infinite;
+}
+.farm-feeding .farm-leg {
+  animation-play-state: paused;
+}
+.farm-feeding .farm-treat,
+.farm-feeding .farm-heart {
+  opacity: 1;
+}
+.farm-feeding .farm-mouth {
+  opacity: 0;
+}
+.farm-static .farm-traveller,
+.farm-static .farm-actor,
+.farm-static .farm-leg {
+  animation: none;
+}
+.farm-paused *,
+.farm-paused .farm-traveller {
+  animation-play-state: paused;
+}
+.farm-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.farm-fallback {
+  display: grid;
+  place-content: center;
+  height: 100%;
+  font-size: 12px;
+  color: #344e40;
+}
+/* Each travel cycle includes rests at both ends. Body/feet settle during rests. */
+@keyframes farm-travel {
+  0%,
+  25%,
+  100% {
+    transform: translateX(-18px);
+  }
+  50%,
+  75% {
+    transform: translateX(18px);
+  }
+}
+@keyframes farm-step {
+  0%,
+  25%,
+  50%,
+  75%,
+  100% {
+    transform: scale(1);
+  }
+  12%,
+  62% {
+    transform: scale(1.015, 1.025);
+  }
+  28%,
+  32%,
+  36%,
+  40%,
+  44%,
+  48%,
+  78%,
+  82%,
+  86%,
+  90%,
+  94%,
+  98% {
+    transform: translateY(-3px) rotate(1deg);
+  }
+  30%,
+  34%,
+  38%,
+  42%,
+  46%,
+  80%,
+  84%,
+  88%,
+  92%,
+  96% {
+    transform: none;
+  }
+}
+@keyframes farm-leg {
+  0%,
+  25%,
+  50%,
+  75%,
+  100% {
+    transform: rotate(0);
+  }
+  28%,
+  32%,
+  36%,
+  40%,
+  44%,
+  48%,
+  78%,
+  82%,
+  86%,
+  90%,
+  94%,
+  98% {
+    transform: rotate(10deg);
+  }
+  30%,
+  34%,
+  38%,
+  42%,
+  46%,
+  80%,
+  84%,
+  88%,
+  92%,
+  96% {
+    transform: rotate(-10deg);
+  }
+}
+@keyframes farm-nibble {
+  50% {
+    transform: rotate(-3deg) translateY(2px);
+  }
+}
+@media (max-width: 400px) {
+  .mascot-page .mascot-growth {
+    padding: 8px;
+  }
+  .mascot-farm {
+    --farm-base: 112px;
+  }
+}
