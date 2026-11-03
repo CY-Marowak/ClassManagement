@@ -1,4 +1,4 @@
-import type { MascotAnimal } from "./AnimalAvatar";
+import type { MascotAnimal } from "./mascotAnimals";
 
 // Original SVG, extending the accepted cm-v2 sample. All stages share y=21..132
 // and the same foot anchor; changing proportions never resets the growth scale.
@@ -9,7 +9,15 @@ export default function MascotArtwork({
   animal: MascotAnimal;
   stage: number;
 }) {
-  const fur = { cat: "#edc889", dog: "#d4b392", rabbit: "#fffaf0" }[animal];
+  const fur = {
+    cat: "#edc889",
+    dog: "#d4b392",
+    rabbit: "#fffaf0",
+    cow: "#fff5df",
+    horse: "#c99a78",
+    pig: "#edb7aa",
+  }[animal];
+  const hasMuzzle = animal === "cow" || animal === "horse" || animal === "pig";
   const headY = (animal === "rabbit" ? [72, 70, 68] : [64, 61, 58])[stage];
   return (
     <svg viewBox="0 0 120 140" aria-hidden="true">
@@ -22,11 +30,24 @@ export default function MascotArtwork({
       >
         {animal === "rabbit" ? (
           <circle cx="91" cy="108" r="12" fill={fur} />
+        ) : animal === "pig" ? (
+          <path
+            d="M85 109 Q106 110 103 99 Q100 93 95 99 Q92 105 108 101"
+            fill="none"
+            stroke={fur}
+            strokeWidth="6"
+          />
         ) : (
           <path
             d="M85 107 Q111 103 102 82"
             fill="none"
-            stroke={animal === "cat" ? "#d9ab6b" : "#a98267"}
+            stroke={
+              animal === "cat"
+                ? "#d9ab6b"
+                : animal === "horse"
+                  ? "#86674f"
+                  : "#a98267"
+            }
             strokeWidth="9"
           />
         )}
@@ -80,6 +101,40 @@ export default function MascotArtwork({
             fill={fur}
           />
         )}
+        {animal === "cow" && (
+          <>
+            <path
+              d="M39 41 Q14 24 19 48 Q26 57 40 51 M81 41 Q106 24 101 48 Q94 57 80 51"
+              fill="#ac8261"
+            />
+            <path
+              d="M39 36 Q29 21 41 21 L48 37 M72 37 L79 21 Q91 21 81 36"
+              fill="#ebd19b"
+            />
+          </>
+        )}
+        {animal === "horse" && (
+          <>
+            <path
+              d="M34 50 Q24 12 40 23 L49 42 M71 42 L80 23 Q96 12 86 50"
+              fill={fur}
+            />
+            <path d="M37 29 L41 42 M83 29 L79 42" stroke="#e5b8a0" />
+          </>
+        )}
+        {animal === "pig" && (
+          <>
+            <path
+              d="M31 54 Q17 21 34 21 L50 40 M70 40 L86 21 Q103 21 89 54"
+              fill={fur}
+            />
+            <path
+              d="M31 33 L36 44 M89 33 L84 44"
+              stroke="#d99188"
+              strokeWidth="4"
+            />
+          </>
+        )}
         <ellipse
           cx="60"
           cy={headY}
@@ -87,6 +142,31 @@ export default function MascotArtwork({
           ry={animal === "rabbit" ? 25 : 30}
           fill={fur}
         />
+        {animal === "cow" && (
+          <path
+            d="M36 43 Q55 30 53 58 Q44 66 32 56"
+            fill="#ac8261"
+            stroke="none"
+          />
+        )}
+        {animal === "horse" && (
+          <path
+            d="M37 45 Q37 26 58 29 Q82 26 85 50 L72 45 L67 57 L58 44 L49 53 L49 40 Z"
+            fill="#86674f"
+          />
+        )}
+        {hasMuzzle && (
+          <>
+            <ellipse
+              cx="60"
+              cy={headY + 14}
+              rx={animal === "pig" ? 20 : 23}
+              ry="14"
+              fill={animal === "horse" ? "#e6c6a1" : "#e9b7a1"}
+            />
+            <path d={`M51 ${headY + 12} v2 M69 ${headY + 12} v2`} />
+          </>
+        )}
         {animal === "dog" && (
           <>
             <ellipse
@@ -141,10 +221,12 @@ export default function MascotArtwork({
           fill="#e3a08d"
           stroke="none"
         />
-        <path
-          d={`M57 ${headY + 9} L60 ${headY + 12} L63 ${headY + 9} Z`}
-          fill="#405849"
-        />
+        {!hasMuzzle && (
+          <path
+            d={`M57 ${headY + 9} L60 ${headY + 12} L63 ${headY + 9} Z`}
+            fill="#405849"
+          />
+        )}
         <path
           className="farm-mouth"
           d={`M54 ${headY + 19} Q60 ${headY + 24} 66 ${headY + 19}`}

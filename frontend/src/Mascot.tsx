@@ -7,7 +7,7 @@ import {
   type FormEvent,
 } from "react";
 import { api, ApiError } from "./api";
-import { animalNames, type MascotAnimal } from "./AnimalAvatar";
+import { animalNames, type MascotAnimal } from "./mascotAnimals";
 import { MascotFarm } from "./MascotFarm";
 import { studentRoleNames, type StudentRole } from "./studentRoles";
 

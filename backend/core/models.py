@@ -39,8 +39,17 @@ def teacher_application_code():
     return "T-" + secrets.token_hex(8).upper()
 
 
+class MascotAnimal(models.TextChoices):
+    CAT = "cat", "貓"
+    DOG = "dog", "狗"
+    RABBIT = "rabbit", "兔"
+    COW = "cow", "牛"
+    HORSE = "horse", "馬"
+    PIG = "pig", "豬"
+
+
 def mascot_animal():
-    return secrets.choice(["cat", "dog", "rabbit"])
+    return secrets.choice(MascotAnimal.values)
 
 
 class Cohort(models.Model):
@@ -64,7 +73,7 @@ class Mascot(models.Model):
     cohort = models.OneToOneField(Cohort, on_delete=models.CASCADE, related_name="mascot")
     animal = models.CharField(
         max_length=10,
-        choices=[("cat", "貓"), ("dog", "狗"), ("rabbit", "兔")],
+        choices=MascotAnimal.choices,
         default=mascot_animal,
     )
     exp = models.PositiveBigIntegerField(default=0)

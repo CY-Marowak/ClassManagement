@@ -58,12 +58,49 @@ class MascotTests(APITestCase):
         response = self.client.get(self.base + "mascot/")
         self.assertEqual(response.status_code, 200)
         mascot = response.json()
-        self.assertIn(mascot["animal"], ["cat", "dog", "rabbit"])
+        self.assertIn(mascot["animal"], ["cat", "dog", "rabbit", "cow", "horse", "pig"])
         self.assertEqual(mascot["exp"], 0)
         self.assertEqual(mascot["level"], 1)
         self.assertEqual(mascot["remaining_exp"], 100)
         self.client.patch(self.base, {"current_grade": 2})
         self.assertEqual(self.client.get(self.base + "mascot/").json(), mascot)
+
+    def test_new_classes_can_receive_all_six_animals_without_changing_existing_growth(self):
+        Mascot.objects.filter(cohort_id=self.cohort["id"]).update(animal="rabbit", exp=4501)
+        existing = self.client.get(self.base + "mascot/").json()
+        for index, animal in enumerate(["cat", "dog", "rabbit", "cow", "horse", "pig"]):
+            with self.subTest(animal=animal):
+                # Control only randomness, selecting a real entry rather than inventing a result.
+                with patch("secrets.choice", side_effect=lambda options: options[index]):
+                    response = self.client.post(
+                        "/api/classes/",
+                        {"name": f"新班{index}", "entry_year": 2026, "current_grade": 1},
+                    )
+                self.assertEqual(response.status_code, 201)
+                base = f"/api/classes/{response.json()['id']}/"
+                mascot = self.client.get(base + "mascot/").json()
+                self.assertEqual((mascot["animal"], mascot["exp"], mascot["level"]), (animal, 0, 1))
+                self.client.patch(base, {"current_grade": 2})
+                self.assertEqual(self.client.get(base + "mascot/").json(), mascot)
+        self.assertEqual(self.client.get(self.base + "mascot/").json(), existing)
+
+    def test_new_animals_feed_without_changing_student_role_or_collection(self):
+        student = self.student_login()
+        self.award(5)
+        collection = student.get("/api/student/roles/").json()
+        for animal in ["cow", "horse", "pig"]:
+            with self.subTest(animal=animal):
+                Mascot.objects.filter(cohort_id=self.cohort["id"]).update(animal=animal, exp=999)
+                self.assertEqual(self.feed(student, 1).status_code, 201)
+                mascot = student.get("/api/student/mascot/").json()["mascot"]
+                self.assertEqual(
+                    (mascot["animal"], mascot["exp"], mascot["level"]), (animal, 1000, 5)
+                )
+                roles = student.get("/api/student/roles/").json()
+                self.assertEqual(roles["owned"], collection["owned"])
+                self.assertEqual(roles["selected"], collection["selected"])
+        data = student.get("/api/student/mascot/").json()
+        self.assertEqual((data["point_balance"], data["daily_remaining"]), (2, 2))
 
     def test_invalid_insufficient_daily_limit_and_retry_preserve_money(self):
         student = self.student_login()

@@ -8,7 +8,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { animalNames, type MascotAnimal } from "./AnimalAvatar";
+import { animalNames, type MascotAnimal } from "./mascotAnimals";
 import "./mascot-farm.css";
 
 const Artwork = lazy(() => import("./MascotArtwork"));
