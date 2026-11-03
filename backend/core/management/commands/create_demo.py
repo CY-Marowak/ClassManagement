@@ -10,6 +10,7 @@ from django.utils import timezone
 from core.models import (
     Announcement,
     AnnouncementComment,
+    AnnouncementVersion,
     ClassMember,
     Cohort,
     Mascot,
@@ -142,6 +143,12 @@ class Command(BaseCommand):
                 title="一起照顧班級吉祥物",
                 body=document("完成課堂任務後，可自願使用點數餵食。"),
                 is_pinned=True,
+            )
+            AnnouncementVersion.objects.create(
+                announcement=announcement,
+                number=1,
+                title=announcement.title,
+                body=announcement.body,
             )
             AnnouncementComment.objects.create(
                 announcement=announcement,

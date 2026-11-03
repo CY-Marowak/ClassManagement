@@ -260,9 +260,40 @@ class Announcement(models.Model):
     body = models.JSONField()
     is_pinned = models.BooleanField(default=False)
     revision = models.PositiveIntegerField(default=1)
+    content_version = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(null=True)
     deleted_at = models.DateTimeField(null=True)
+
+
+class AnnouncementVersion(models.Model):
+    announcement = models.ForeignKey(
+        Announcement, on_delete=models.CASCADE, related_name="versions"
+    )
+    number = models.PositiveIntegerField()
+    title = models.CharField(max_length=100)
+    body = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["announcement", "number"], name="announcement_version_once"
+            )
+        ]
+
+
+class AnnouncementReceipt(models.Model):
+    version = models.ForeignKey(
+        AnnouncementVersion, on_delete=models.CASCADE, related_name="receipts"
+    )
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    confirmed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["version", "student"], name="announcement_receipt_once")
+        ]
 
 
 class AnnouncementOperation(models.Model):

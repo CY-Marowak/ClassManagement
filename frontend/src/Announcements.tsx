@@ -12,6 +12,10 @@ import type { JSONContent } from "@tiptap/react";
 import { api, ApiError, type Cohort } from "./api";
 import { AnnouncementContent, emptyDocument } from "./AnnouncementContent";
 import { AnnouncementComments } from "./AnnouncementComments";
+import {
+  AnnouncementReadRoster,
+  StudentReadConfirmation,
+} from "./AnnouncementReceipts";
 const AnnouncementEditor = lazy(() =>
   import("./AnnouncementEditor").then((module) => ({
     default: module.AnnouncementEditor,
@@ -26,6 +30,8 @@ type Announcement = {
   creator_name: string;
   is_pinned: boolean;
   revision: number;
+  content_version: number;
+  confirmed_at: string | null;
   created_at: string;
   edited_at: string | null;
 };
@@ -362,6 +368,24 @@ export function Announcements({
               )}
             </p>
             <AnnouncementContent body={item.body} />
+            {!cohort && (
+              <StudentReadConfirmation
+                key={`${item.id}:${item.content_version}:${item.confirmed_at}`}
+                id={item.id}
+                version={item.content_version}
+                confirmedAt={item.confirmed_at}
+                onRefresh={() => void refresh(1)}
+              />
+            )}
+            {editable && (
+              <AnnouncementReadRoster
+                key={`${item.id}:${item.content_version}`}
+                endpoint={`${endpoint}${item.id}/`}
+                version={item.content_version}
+                disabled={locked || loading || !!draft || !!deleting}
+                onRefresh={() => void refresh(1)}
+              />
+            )}
             <AnnouncementComments
               endpoint={`${endpoint}${item.id}/comments/`}
               initialCount={item.comment_count}

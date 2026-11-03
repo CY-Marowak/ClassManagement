@@ -10,7 +10,14 @@ from rest_framework.views import APIView
 from .announcement_content import validate_document
 from .awards import StrictSerializer
 from .batch_scores import fingerprint
-from .models import Announcement, AnnouncementOperation, Cohort, Student
+from .models import (
+    Announcement,
+    AnnouncementOperation,
+    AnnouncementReceipt,
+    AnnouncementVersion,
+    Cohort,
+    Student,
+)
 from .permissions import IsReadyUser, IsStudent, IsTeacher
 from .scores import WholeNumberField, require_teacher
 
@@ -71,7 +78,7 @@ def save_result(item, user, values, digest, result):
     )
 
 
-def announcement_data(item):
+def announcement_data(item, confirmed_at=None):
     return {
         "comment_count": item.comments.filter(deleted_at__isnull=True).count(),
         "id": item.pk,
@@ -80,6 +87,8 @@ def announcement_data(item):
         "creator_name": item.creator_name,
         "is_pinned": item.is_pinned,
         "revision": item.revision,
+        "content_version": item.content_version,
+        "confirmed_at": confirmed_at.isoformat() if confirmed_at else None,
         "created_at": item.created_at.isoformat(),
         "edited_at": item.edited_at.isoformat() if item.edited_at else None,
     }
@@ -89,7 +98,7 @@ class AnnouncementPagination(PageNumberPagination):
     page_size = 10
 
 
-def announcement_page(request, cohort_id):
+def announcement_page(request, cohort_id, student=None):
     paginator = AnnouncementPagination()
     page = paginator.paginate_queryset(
         Announcement.objects.filter(cohort_id=cohort_id, deleted_at__isnull=True).order_by(
@@ -98,7 +107,23 @@ def announcement_page(request, cohort_id):
         request,
     )
     assert page is not None
-    return paginator.get_paginated_response([announcement_data(item) for item in page])
+    receipts = {}
+    if student:
+        receipts = {
+            (receipt.version.announcement_id, receipt.version.number): receipt.confirmed_at
+            for receipt in AnnouncementReceipt.objects.filter(
+                student=student, version__announcement__in=page
+            ).select_related("version")
+        }
+    return paginator.get_paginated_response(
+        [announcement_data(item, receipts.get((item.pk, item.content_version))) for item in page]
+    )
+
+
+def save_content_version(item):
+    AnnouncementVersion.objects.create(
+        announcement=item, number=item.content_version, title=item.title, body=item.body
+    )
 
 
 class AnnouncementsView(APIView):
@@ -128,6 +153,7 @@ class AnnouncementsView(APIView):
                 title=values["title"],
                 body=values["body"],
             )
+            save_content_version(item)
             result = announcement_data(item)
             save_result(item, request.user, values, digest, result)
             return Response(result, status=201)
@@ -159,6 +185,8 @@ class AnnouncementChangeView(APIView):
                 if (item.title, item.body) != (values["title"], values["body"]):
                     item.title, item.body = values["title"], values["body"]
                     item.edited_at = timezone.now()
+                    item.content_version += 1
+                    save_content_version(item)
             elif values["action"] == "pin":
                 item.is_pinned = values["is_pinned"]
             else:
@@ -187,4 +215,76 @@ class StudentAnnouncementsView(APIView):
     def get(self, request):
         with transaction.atomic():
             student = locked_announcement_student(request)
-            return announcement_page(request, student.cohort_id)
+            return announcement_page(request, student.cohort_id, student)
+
+
+class ConfirmReadSerializer(StrictSerializer):
+    content_version = WholeNumberField(min_value=1)
+
+
+class StudentAnnouncementReadView(APIView):
+    permission_classes = [IsStudent, IsReadyUser]
+
+    def post(self, request, announcement_id):
+        form = ConfirmReadSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        with transaction.atomic():
+            student = locked_announcement_student(request)
+            item = get_object_or_404(
+                Announcement,
+                pk=announcement_id,
+                cohort_id=student.cohort_id,
+                deleted_at__isnull=True,
+            )
+            if item.content_version != form.validated_data["content_version"]:
+                return Response(
+                    {"detail": "公告內容已更新，請重新載入並閱讀後再確認。"}, status=409
+                )
+            version = get_object_or_404(
+                AnnouncementVersion, announcement=item, number=item.content_version
+            )
+            receipt, _ = AnnouncementReceipt.objects.get_or_create(version=version, student=student)
+            return Response(
+                {
+                    "content_version": version.number,
+                    "confirmed_at": receipt.confirmed_at.isoformat(),
+                }
+            )
+
+
+class AnnouncementReceiptsView(APIView):
+    permission_classes = [IsTeacher]
+
+    def get(self, request, pk, announcement_id):
+        with transaction.atomic():
+            get_object_or_404(Cohort.objects.select_for_update(), pk=pk)
+            require_teacher(request.user, pk, homeroom=True)
+            item = get_object_or_404(
+                Announcement, pk=announcement_id, cohort_id=pk, deleted_at__isnull=True
+            )
+            receipts = dict(
+                AnnouncementReceipt.objects.filter(
+                    version__announcement=item, version__number=item.content_version
+                ).values_list("student_id", "confirmed_at")
+            )
+            students = [
+                {
+                    "id": student.pk,
+                    "seat_number": student.seat_number,
+                    "name": student.user.display_name,
+                    "confirmed_at": receipts[student.pk].isoformat()
+                    if student.pk in receipts
+                    else None,
+                }
+                for student in Student.objects.filter(cohort_id=pk)
+                .select_related("user")
+                .order_by("seat_number", "pk")
+            ]
+            return Response(
+                {
+                    "content_version": item.content_version,
+                    "read_count": len(receipts),
+                    "unread_count": len(students) - len(receipts),
+                    "students": students,
+                }
+            )

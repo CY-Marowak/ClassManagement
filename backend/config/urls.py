@@ -1,5 +1,11 @@
 from core import views
-from core.announcements import AnnouncementChangeView, AnnouncementsView, StudentAnnouncementsView
+from core.announcements import (
+    AnnouncementChangeView,
+    AnnouncementReceiptsView,
+    AnnouncementsView,
+    StudentAnnouncementReadView,
+    StudentAnnouncementsView,
+)
 from core.awards import PointAwardsView
 from core.batch_scores import PendingReasonsView, ScoreBatchesView
 from core.cohorts import ClassDetailView, ClassesView
@@ -25,6 +31,14 @@ from django.urls import path
 from .deployment import health
 
 urlpatterns = [
+    path(
+        "api/student/announcements/<int:announcement_id>/read/",
+        StudentAnnouncementReadView.as_view(),
+    ),
+    path(
+        "api/classes/<int:pk>/announcements/<int:announcement_id>/read-receipts/",
+        AnnouncementReceiptsView.as_view(),
+    ),
     path("api/student/history/<str:kind>/", HistoryView.as_view()),
     path("api/student/history/<str:kind>/export/", HistoryView.as_view(export=True)),
     path("api/classes/<int:pk>/history/<str:kind>/", HistoryView.as_view()),

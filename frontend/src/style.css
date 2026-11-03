@@ -1485,3 +1485,19 @@ button.dashboard-tile:hover {
     grid-template-columns: 1fr;
   }
 }
+/* Current-version reading controls stay readable on narrow student screens. */
+.announcement-reading {
+  margin-block: 1rem;
+}
+.announcement-readers {
+  list-style: none;
+  padding: 0;
+}
+.announcement-readers li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding-block: 0.5rem;
+  overflow-wrap: anywhere;
+}
