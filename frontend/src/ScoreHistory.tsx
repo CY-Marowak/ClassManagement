@@ -105,7 +105,7 @@ export function ScoreHistory({
             )}
             {onOpenHistory && (
               <button className="secondary" onClick={onOpenHistory}>
-                完整明細與匯出
+                明細與匯出
               </button>
             )}
             <p className="muted small">

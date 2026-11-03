@@ -77,7 +77,7 @@ test("students browse full personal history and homeroom exports only selected c
   await page.reload();
   await page.getByRole("button", { name: "工作首頁", exact: true }).click();
   await page
-    .getByRole("button", { name: "明細與 CSV 匯出", exact: true })
+    .getByRole("button", { name: "明細與匯出", exact: true })
     .click();
   await expect(
     page.getByText("共 29 筆 · 第 1 頁 · 由新到舊", { exact: true }),
@@ -130,7 +130,7 @@ test("students browse full personal history and homeroom exports only selected c
   });
   await page.reload();
   await page
-    .getByRole("button", { name: "完整明細與匯出", exact: true })
+    .getByRole("button", { name: "明細與匯出", exact: true })
     .click();
   await expect(
     page.getByText("共 28 筆 · 第 1 頁 · 由新到舊", { exact: true }),

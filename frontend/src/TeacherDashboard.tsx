@@ -129,7 +129,7 @@ export function TeacherDashboard({
             </button>
             {cohort.role === "homeroom" && (
               <button className="secondary" onClick={() => onOpen("exports")}>
-                明細與 CSV 匯出
+                明細與匯出
               </button>
             )}
           </div>
