@@ -254,12 +254,6 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
                   </p>
                   <div className="actions">
                     <button
-                      className="secondary"
-                      onClick={() => setHistory(true)}
-                    >
-                      完整明細與匯出
-                    </button>
-                    <button
                       className="primary"
                       onClick={() => setFeeding(true)}
                     >
@@ -287,7 +281,10 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               </section>
-              <ScoreHistory endpoint="/student/scores/" />
+              <ScoreHistory
+                endpoint="/student/scores/"
+                onOpenHistory={() => setHistory(true)}
+              />
             </div>
           </>
         ) : (

@@ -34,10 +34,12 @@ export function ScoreHistory({
   endpoint,
   teacher = false,
   management,
+  onOpenHistory,
 }: {
   endpoint: string;
   teacher?: boolean;
   management?: ScoreManagement;
+  onOpenHistory?: () => void;
 }) {
   const [editing, setEditing] = useState<{
     record: ScoreRecord;
@@ -100,6 +102,11 @@ export function ScoreHistory({
               <p className="score-total">
                 累積分數 <strong>{data.total}</strong>
               </p>
+            )}
+            {onOpenHistory && (
+              <button className="secondary" onClick={onOpenHistory}>
+                完整明細與匯出
+              </button>
             )}
             <p className="muted small">
               共 {data.count} 筆 · 由新到舊 · 分數與可花費的點數分開計算
