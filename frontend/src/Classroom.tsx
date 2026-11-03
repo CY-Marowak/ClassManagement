@@ -12,6 +12,7 @@ import {
   type DashboardDestination,
 } from "./TeacherDashboard";
 import { ImportIssues } from "./ImportIssues";
+import { History } from "./History";
 
 function ClassForm({
   cohort,
@@ -241,6 +242,7 @@ export function Classroom({
   const [announcements, setAnnouncements] = useState<Cohort | null>(null);
   const [dashboard, setDashboard] = useState<Cohort | null>(null);
   const [imports, setImports] = useState<Cohort | null>(null);
+  const [exports, setExports] = useState<Cohort | null>(null);
   const [scoreView, setScoreView] = useState<"entry" | "history" | "pending">(
     "entry",
   );
@@ -288,6 +290,7 @@ export function Classroom({
               setAnnouncements(null);
               setDashboard(null);
               setImports(null);
+              setExports(null);
               setScoreView("entry");
             }}
           >
@@ -315,7 +318,13 @@ export function Classroom({
         </div>
       </aside>
       <main className="workspace-main">
-        {announcements ? (
+        {exports ? (
+          <History
+            key={exports.id}
+            cohort={exports}
+            onBack={() => setExports(null)}
+          />
+        ) : announcements ? (
           <Announcements
             backLabel={dashboard ? "← 返回工作首頁" : undefined}
             key={announcements.id}
@@ -376,6 +385,7 @@ export function Classroom({
               else if (destination === "imports") setImports(dashboard);
               else if (destination === "awards") setAwards(dashboard);
               else if (destination === "mascot") setMascot(dashboard);
+              else if (destination === "exports") setExports(dashboard);
               else if (destination === "announcements")
                 setAnnouncements(dashboard);
               else {

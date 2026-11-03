@@ -6,6 +6,7 @@ import type { StudentRole } from "./studentRoles";
 import { ScoreHistory } from "./ScoreHistory";
 import { Mascot } from "./Mascot";
 import { Announcements } from "./Announcements";
+import { History } from "./History";
 
 export function StudentAccess({
   changing = false,
@@ -152,6 +153,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
   const [busy, setBusy] = useState(false);
   const [feeding, setFeeding] = useState(false);
   const [collecting, setCollecting] = useState(false);
+  const [history, setHistory] = useState(false);
   const updateRole = useCallback((avatar: StudentRole) => {
     setProfile((old) => (old ? { ...old, avatar } : old));
   }, []);
@@ -201,7 +203,9 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             {error}
           </p>
         )}
-        {profile && collecting ? (
+        {profile && history ? (
+          <History onBack={() => setHistory(false)} />
+        ) : profile && collecting ? (
           <RoleCollection
             studentId={profile.id}
             onBalance={updateBalance}
@@ -249,6 +253,12 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
                     點數可用來餵食或收藏角色，和分數分開計算。
                   </p>
                   <div className="actions">
+                    <button
+                      className="secondary"
+                      onClick={() => setHistory(true)}
+                    >
+                      完整明細與匯出
+                    </button>
                     <button
                       className="primary"
                       onClick={() => setFeeding(true)}

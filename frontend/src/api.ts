@@ -34,6 +34,9 @@ export type StudentProfile = Student & {
 };
 
 const fieldNames: Record<string, string> = {
+  start: "起日",
+  end: "迄日",
+  page: "頁碼",
   role: "角色",
   title: "公告標題",
   body: "內文",

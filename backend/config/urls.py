@@ -5,6 +5,7 @@ from core.batch_scores import PendingReasonsView, ScoreBatchesView
 from core.cohorts import ClassDetailView, ClassesView
 from core.comments import CommentChangeView, CommentsView, StudentCommentsView
 from core.dashboard import DashboardView
+from core.history import HistoryView
 from core.import_issues import ImportIssuesView, ResolveImportIssueView
 from core.mascots import ClassMascotView, StudentMascotView
 from core.memberships import (
@@ -24,6 +25,10 @@ from django.urls import path
 from .deployment import health
 
 urlpatterns = [
+    path("api/student/history/<str:kind>/", HistoryView.as_view()),
+    path("api/student/history/<str:kind>/export/", HistoryView.as_view(export=True)),
+    path("api/classes/<int:pk>/history/<str:kind>/", HistoryView.as_view()),
+    path("api/classes/<int:pk>/history/<str:kind>/export/", HistoryView.as_view(export=True)),
     path("api/student/roles/", StudentRolesView.as_view()),
     path("api/student/roles/purchases/", StudentRolePurchasesView.as_view()),
     path("healthz", health),

@@ -18,6 +18,7 @@ export type DashboardDestination =
   | "entry"
   | "awards"
   | "announcements"
+  | "exports"
   | "mascot";
 
 export function TeacherDashboard({
@@ -126,6 +127,11 @@ export function TeacherDashboard({
             <button className="secondary" onClick={() => onOpen("mascot")}>
               班級吉祥物
             </button>
+            {cohort.role === "homeroom" && (
+              <button className="secondary" onClick={() => onOpen("exports")}>
+                明細與 CSV 匯出
+              </button>
+            )}
           </div>
           <section className="roster-panel" aria-label="最近十筆記分">
             <div className="page-title dashboard-history-header">
