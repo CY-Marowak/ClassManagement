@@ -73,7 +73,7 @@ export function MascotFarm({
       return;
     }
     setFeeding(true);
-    const timer = window.setTimeout(() => setFeeding(false), 2000);
+    const timer = window.setTimeout(() => setFeeding(false), 4000);
     return () => clearTimeout(timer);
   }, [feedSignal, hidden, isStatic]);
   return (
@@ -120,7 +120,7 @@ export function MascotFarm({
           aria-pressed={isStatic}
           onClick={() => setChosenStatic(!isStatic)}
         >
-          {isStatic ? "開啟動畫" : "切換靜態"}
+          {isStatic ? "動一動" : "休息一下"}
         </button>
       </div>
     </>

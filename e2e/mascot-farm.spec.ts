@@ -83,10 +83,10 @@ test("farm shows only current growth, keeps mobile size and respects motion cont
   await expect(page.getByRole("img", { name: /農場中的.*幼年/ })).toBeVisible();
   await expect(page.getByText("幼年 · 1.00 倍", { exact: true })).toBeVisible();
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(page.getByRole("button", { name: "開啟動畫" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "動一動" })).toBeVisible();
   const traveller = page.locator(".farm-traveller");
   expect(await traveller.evaluate((el) => el.getAnimations().length)).toBe(0);
-  await page.getByRole("button", { name: "開啟動畫" }).click();
+  await page.getByRole("button", { name: "動一動" }).click();
   await expect
     .poll(() => traveller.evaluate((el) => el.getAnimations()[0]?.playState))
     .toBe("running");
@@ -98,7 +98,7 @@ test("farm shows only current growth, keeps mobile size and respects motion cont
   await expect
     .poll(async () => Math.abs((await traveller.boundingBox())!.x - startX))
     .toBeGreaterThan(2);
-  await page.getByRole("button", { name: "切換靜態" }).click();
+  await page.getByRole("button", { name: "休息一下" }).click();
   expect(await traveller.evaluate((el) => el.getAnimations().length)).toBe(0);
 
   const levels = [
@@ -158,7 +158,7 @@ test("farm shows only current growth, keeps mobile size and respects motion cont
       }
     }
   }
-  await page.getByRole("button", { name: "開啟動畫" }).click();
+  await page.getByRole("button", { name: "動一動" }).click();
   for (const [exp, level, label] of [
     [999, 5, "成長期 · 1.12 倍"],
     [4499, 10, "成熟 · 1.27 倍"],
@@ -179,9 +179,9 @@ test("farm shows only current growth, keeps mobile size and respects motion cont
     await expect(page.getByText(label, { exact: true })).toBeVisible();
     await expect(page.locator(".farm-treat")).toHaveCSS("opacity", "0");
   }
-  await page.getByRole("button", { name: "切換靜態" }).click();
-  await page.getByRole("button", { name: "開啟動畫" }).click();
-  await expect(page.getByRole("button", { name: "切換靜態" })).toBeVisible();
+  await page.getByRole("button", { name: "休息一下" }).click();
+  await page.getByRole("button", { name: "動一動" }).click();
+  await expect(page.getByRole("button", { name: "休息一下" })).toBeVisible();
   expect(
     await page
       .locator(".farm-treat")
@@ -220,7 +220,7 @@ test("farm shows only current growth, keeps mobile size and respects motion cont
   await expect(
     page.getByText("仍可餵食與查看成長", { exact: false }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "開啟動畫" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "動一動" })).toBeVisible();
   await page.getByRole("button", { name: "確認餵食", exact: true }).click();
   await expect(
     page.getByText("餵食成功，班級吉祥物增加 1 exp。", { exact: true }),
