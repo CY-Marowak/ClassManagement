@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { api, ApiError } from "./api";
+import { AnnouncementReminders } from "./AnnouncementReminders";
 
 type Confirmation = { content_version: number; confirmed_at: string | null };
 type Reader = {
@@ -102,6 +103,7 @@ export function AnnouncementReadRoster({
   const [error, setError] = useState("");
   const [stale, setStale] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [reminderLocked, setReminderLocked] = useState(false);
   async function load() {
     setBusy(true);
     setData(null);
@@ -123,7 +125,7 @@ export function AnnouncementReadRoster({
     <div className="announcement-reading">
       <button
         className="text-button"
-        disabled={disabled || busy}
+        disabled={disabled || busy || reminderLocked}
         aria-expanded={open}
         onClick={() => {
           setOpen(!open);
@@ -147,7 +149,7 @@ export function AnnouncementReadRoster({
           ) : (
             <button
               className="text-button"
-              disabled={disabled || busy}
+              disabled={disabled || busy || reminderLocked}
               onClick={load}
             >
               更新已讀名單
@@ -195,6 +197,14 @@ export function AnnouncementReadRoster({
               {!data.students.length && (
                 <p className="muted">班級目前沒有學生。</p>
               )}
+              <AnnouncementReminders
+                endpoint={endpoint}
+                version={version}
+                students={data.students}
+                disabled={disabled || busy}
+                onLockChange={setReminderLocked}
+                onRefresh={onRefresh}
+              />
             </>
           )}
         </section>

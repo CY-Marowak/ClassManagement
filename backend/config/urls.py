@@ -22,6 +22,7 @@ from core.memberships import (
     TeachersView,
 )
 from core.notifications import NotificationsView, OpenNotificationView, ViewAllNotificationsView
+from core.reminders import AnnouncementRemindersView
 from core.role_collection import StudentRolePurchasesView, StudentRolesView
 from core.score_changes import ScoreChangesView, ScoreEditPreviewView
 from core.scores import ScoreEventsView, ScoreRosterView, ScoresView, StudentScoresView
@@ -35,6 +36,10 @@ urlpatterns = [
     path("api/notifications/", NotificationsView.as_view()),
     path("api/notifications/viewed/", ViewAllNotificationsView.as_view()),
     path("api/notifications/<int:notification_id>/open/", OpenNotificationView.as_view()),
+    path(
+        "api/classes/<int:pk>/announcements/<int:announcement_id>/reminders/",
+        AnnouncementRemindersView.as_view(),
+    ),
     path(
         "api/student/announcements/<int:announcement_id>/read/",
         StudentAnnouncementReadView.as_view(),

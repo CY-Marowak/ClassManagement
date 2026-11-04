@@ -1502,6 +1502,12 @@ button.dashboard-tile:hover {
   overflow-wrap: anywhere;
 }
 /* Notification inbox stays usable at narrow phone widths. */
+.reminder-panel {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #d5dfcf;
+}
+.reminder-panel select { max-width: 100%; }
 .notification-bell {
   display: inline-flex;
   align-items: center;

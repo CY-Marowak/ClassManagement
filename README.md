@@ -148,7 +148,17 @@ Email 不需要真實存在就能本機試用。正式模式預設採 Resend HTT
 
 留言修改不重發、刪除留言不在通知保留留言文字，取消置頂不撤回先前通知。通知僅顯示事件類型、目前公告標題與班名；刪除公告後隱藏相關通知並排除未查看數量。所有通知請求重新核對本人、目前班級權限與登入狀態；永久刪學生／班級會真正清除所屬通知，其他人及班級保留。
 
-API為 `GET /api/notifications/`、`POST /api/notifications/<id>/open/` 與 `POST /api/notifications/viewed/`（`through_id`為列表回傳的`latest_id`）。公告列表可透過`announcement_id`開啟權限內的指定公告，不受原公告分頁影響。手動未讀提醒屬於後續任務09。
+API為 `GET /api/notifications/`、`POST /api/notifications/<id>/open/` 與 `POST /api/notifications/viewed/`（`through_id`為列表回傳的`latest_id`）。公告列表可透過`announcement_id`開啟權限內的指定公告，不受原公告分頁影響。
+
+## 導師手動未讀提醒（v2 任務09）
+
+導師開啟公告的「已讀／未讀名單」，於「提醒未讀學生」選單選單人或全部目前符合資格者，按「發送提醒」。結果顯示已發送、已讀略過、今日已提醒的人數；回應遺失時「重試這次提醒」沿用同一操作識別。「查看提醒紀錄」依新到舊、每頁25筆顯示學生、發送時間、內容版本及導師。
+
+每則公告每位學生依台北日期每日最多一次，公告改版不重置當日額度。送出時於班級交易鎖內重新檢查權限、Session、內容版本及未讀名單；舊版畫面拒絕發送，需載入最新公告。取得鎖後才決定日期；跨午夜重試仍回傳原操作結果，不再發送。沒有自動催促、寄信或手機推播。
+
+學生從通知中心開啟「公告未讀提醒」，仍需另按「確認已讀」。共同教師無發送／紀錄權限；學生沒有額外提醒歷史頁。公告刪除隱藏通知及相關入口；永久刪學生／班級實際清除所屬提醒與通知，不保留姓名快照，其他人的資料保留。
+
+更新本機先套用0027 migration，不補歷史提醒。API：`GET/POST /api/classes/<id>/announcements/<id>/reminders/`；POST帶`request_id`、`content_version`，單人另帶`student_id`，省略表示全部。提醒與通知同交易建立，資料庫唯一約束保護每日額度。測試見`test_reminders.py`、`test_reminder_transactions.py`與`e2e/reminders.spec.ts`。
 
 ## 完整明細與 CSV 匯出
 

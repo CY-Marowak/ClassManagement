@@ -30,6 +30,7 @@ const labels: Record<string, string> = {
   announcement_comment: "公告新留言",
   pinned_comment: "置頂公告新留言",
   teacher_application: "教師申請",
+  announcement_reminder: "公告未讀提醒",
 };
 
 export function Notifications({

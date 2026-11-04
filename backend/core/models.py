@@ -362,6 +362,39 @@ class Notification(models.Model):
         indexes = [models.Index(fields=["recipient", "-id"], name="notification_inbox")]
 
 
+class ReminderOperation(models.Model):
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE)
+    actor = models.ForeignKey(User, on_delete=models.PROTECT)
+    target_student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
+    request_id = models.UUIDField()
+    fingerprint = models.CharField(max_length=64)
+    result = models.JSONField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["announcement", "actor", "request_id"], name="reminder_request_once"
+            )
+        ]
+
+
+class AnnouncementReminder(models.Model):
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE)
+    version = models.ForeignKey(AnnouncementVersion, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    operation = models.ForeignKey(ReminderOperation, on_delete=models.CASCADE)
+    notification = models.OneToOneField(Notification, on_delete=models.CASCADE)
+    sent_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["announcement", "student", "sent_date"], name="reminder_student_day_once"
+            )
+        ]
+
+
 class PointAwardBatch(models.Model):
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
     actor = models.ForeignKey(User, on_delete=models.PROTECT)
