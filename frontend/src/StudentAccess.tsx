@@ -1,3 +1,4 @@
+import { Notifications } from "./Notifications";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api, type StudentProfile, type StudentSession } from "./api";
 import { StudentAvatar } from "./StudentAvatar";
@@ -203,6 +204,7 @@ export function StudentHome({ onLogout }: { onLogout: () => void }) {
             {error}
           </p>
         )}
+        {profile && <Notifications student disabled={busy} />}
         {profile && history ? (
           <History onBack={() => setHistory(false)} />
         ) : profile && collecting ? (

@@ -18,6 +18,7 @@ from .models import (
     Cohort,
     Student,
 )
+from .notifications import notify_students
 from .permissions import IsReadyUser, IsStudent, IsTeacher
 from .scores import WholeNumberField, require_teacher
 
@@ -100,10 +101,14 @@ class AnnouncementPagination(PageNumberPagination):
 
 def announcement_page(request, cohort_id, student=None):
     paginator = AnnouncementPagination()
+    items = Announcement.objects.filter(cohort_id=cohort_id, deleted_at__isnull=True)
+    if "announcement_id" in request.query_params:
+        field = WholeNumberField(min_value=1)
+        item_id = field.run_validation(request.query_params["announcement_id"])
+        get_object_or_404(items, pk=item_id)
+        items = items.filter(pk=item_id)
     page = paginator.paginate_queryset(
-        Announcement.objects.filter(cohort_id=cohort_id, deleted_at__isnull=True).order_by(
-            "-is_pinned", "-created_at", "-pk"
-        ),
+        items.order_by("-is_pinned", "-created_at", "-pk"),
         request,
     )
     assert page is not None
@@ -154,6 +159,9 @@ class AnnouncementsView(APIView):
                 body=values["body"],
             )
             save_content_version(item)
+            notify_students(
+                item, request.user, "announcement_published", f"announcement:{item.pk}:1"
+            )
             result = announcement_data(item)
             save_result(item, request.user, values, digest, result)
             return Response(result, status=201)
@@ -187,6 +195,12 @@ class AnnouncementChangeView(APIView):
                     item.edited_at = timezone.now()
                     item.content_version += 1
                     save_content_version(item)
+                    notify_students(
+                        item,
+                        request.user,
+                        "announcement_updated",
+                        f"announcement:{item.pk}:{item.content_version}",
+                    )
             elif values["action"] == "pin":
                 item.is_pinned = values["is_pinned"]
             else:

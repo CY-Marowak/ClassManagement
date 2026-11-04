@@ -12,6 +12,7 @@ from .announcements import locked_announcement_student
 from .awards import StrictSerializer
 from .batch_scores import fingerprint
 from .models import Announcement, AnnouncementComment, Cohort, CommentOperation
+from .notifications import notify_homeroom, notify_students
 from .permissions import IsReadyUser, IsStudent, IsTeacher
 from .scores import WholeNumberField, require_teacher
 
@@ -123,6 +124,20 @@ class CommentsView(APIView):
                 body=values["body"],
             )
             result = comment_data(item, request.user, member)
+            notify_homeroom(
+                pk,
+                request.user,
+                "announcement_comment",
+                f"comment:{item.pk}",
+                announcement=announcement,
+            )
+            if announcement.is_pinned:
+                notify_students(
+                    announcement,
+                    request.user,
+                    "pinned_comment",
+                    f"comment:{item.pk}",
+                )
             save_comment_result(item, request.user, values, digest, result)
             return Response(result, status=201)
 

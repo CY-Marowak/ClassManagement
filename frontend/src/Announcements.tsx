@@ -48,11 +48,13 @@ export function Announcements({
   cohort,
   onBack,
   onReadingChange,
+  initialAnnouncementId,
   backLabel = "← 返回班級",
 }: {
   cohort?: Cohort;
   onBack?: () => void;
   onReadingChange?: (reading: boolean) => void;
+  initialAnnouncementId?: number;
   backLabel?: string;
 }) {
   const endpoint = cohort
@@ -60,7 +62,9 @@ export function Announcements({
     : "/student/announcements/";
   const editable = cohort?.role === "homeroom";
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(
+    initialAnnouncementId ?? null,
+  );
   const returnButton = useRef<HTMLButtonElement>(null);
   const openedButton = useRef<HTMLButtonElement | null>(null);
   const openedId = useRef<number | null>(null);
@@ -87,10 +91,12 @@ export function Announcements({
   const operation = useRef<Operation | null>(null);
   const locked = busy || retry || conflict;
   const load = useCallback(
-    async (target: number) => {
+    async (target: number, announcementId?: number) => {
       setLoading(true);
       try {
-        const result = await api<Page>(`${endpoint}?page=${target}`);
+        const result = await api<Page>(
+          `${endpoint}?page=${target}${announcementId ? `&announcement_id=${announcementId}` : ""}`,
+        );
         setData(result);
         setPage(target);
       } finally {
@@ -100,8 +106,8 @@ export function Announcements({
     [endpoint],
   );
   useEffect(() => {
-    load(1).catch((e) => setError(e.message));
-  }, [load]);
+    load(1, initialAnnouncementId).catch((e) => setError(e.message));
+  }, [load, initialAnnouncementId]);
   async function refresh(target = page) {
     setSelectedId(null);
     setError("");
@@ -157,7 +163,7 @@ export function Announcements({
           ref={returnButton}
           className="text-button"
           disabled={locked || !!draft || !!deleting}
-          onClick={() => setSelectedId(null)}
+          onClick={() => void refresh(1)}
         >
           ← 返回公告清單
         </button>

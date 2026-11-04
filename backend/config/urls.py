@@ -21,6 +21,7 @@ from core.memberships import (
     TeacherEventsView,
     TeachersView,
 )
+from core.notifications import NotificationsView, OpenNotificationView, ViewAllNotificationsView
 from core.role_collection import StudentRolePurchasesView, StudentRolesView
 from core.score_changes import ScoreChangesView, ScoreEditPreviewView
 from core.scores import ScoreEventsView, ScoreRosterView, ScoresView, StudentScoresView
@@ -31,6 +32,9 @@ from django.urls import path
 from .deployment import health
 
 urlpatterns = [
+    path("api/notifications/", NotificationsView.as_view()),
+    path("api/notifications/viewed/", ViewAllNotificationsView.as_view()),
+    path("api/notifications/<int:notification_id>/open/", OpenNotificationView.as_view()),
     path(
         "api/student/announcements/<int:announcement_id>/read/",
         StudentAnnouncementReadView.as_view(),

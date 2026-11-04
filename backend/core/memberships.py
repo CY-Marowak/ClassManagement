@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import ClassMember, Cohort, TeacherAuditEvent, teacher_application_code
+from .notifications import notify_homeroom
 from .permissions import IsTeacher
 from .student_management import require_homeroom
 from .throttling import consume
@@ -42,6 +43,14 @@ def record_event(cohort, actor, action, member=None, before=None, after=None):
         before=before or {},
         after=after or {},
     )
+    if action == "applied":
+        notify_homeroom(
+            cohort.pk,
+            actor,
+            "teacher_application",
+            f"application:{member.pk}:{member.revision}",
+            member=member,
+        )
 
 
 class ApplicationSerializer(serializers.Serializer):

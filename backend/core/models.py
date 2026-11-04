@@ -341,6 +341,27 @@ class CommentOperation(models.Model):
         ]
 
 
+class Notification(models.Model):
+    cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
+    announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, null=True)
+    member = models.ForeignKey(ClassMember, on_delete=models.CASCADE, null=True)
+    kind = models.CharField(max_length=32)
+    event_key = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    viewed_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cohort", "recipient", "event_key"],
+                name="notification_recipient_event_once",
+            )
+        ]
+        indexes = [models.Index(fields=["recipient", "-id"], name="notification_inbox")]
+
+
 class PointAwardBatch(models.Model):
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
     actor = models.ForeignKey(User, on_delete=models.PROTECT)

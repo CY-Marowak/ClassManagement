@@ -13,6 +13,7 @@ import {
 } from "./TeacherDashboard";
 import { ImportIssues } from "./ImportIssues";
 import { History } from "./History";
+import { Notifications } from "./Notifications";
 
 function ClassForm({
   cohort,
@@ -318,6 +319,9 @@ export function Classroom({
         </div>
       </aside>
       <main className="workspace-main">
+        {classes.some((cohort) => cohort.role === "homeroom") && (
+          <Notifications disabled={busy} />
+        )}
         {exports ? (
           <History
             key={exports.id}
