@@ -49,24 +49,29 @@ export function Notifications({
   );
   const dialog = useRef<HTMLDialogElement>(null);
   const bell = useRef<HTMLButtonElement>(null);
-  const load = useCallback(async (number = 1) => {
-    const result = await api<Inbox>(`/notifications/?page=${number}`);
-    setData(result);
-    setPage(number);
+  const loadVersion = useRef(0);
+  const load = useCallback(async (number?: number) => {
+    const version = ++loadVersion.current;
+    try {
+      const result = await api<Inbox>(
+        number === undefined
+          ? "/notifications/"
+          : `/notifications/?page=${number}`,
+      );
+      if (version !== loadVersion.current) return;
+      setData(result);
+      setPage(number ?? 1);
+    } catch (error) {
+      if (version === loadVersion.current) throw error;
+    }
   }, []);
   useEffect(() => {
-    let active = true;
-    api<Inbox>("/notifications/")
-      .then((result) => {
-        if (active) setData(result);
-      })
-      .catch(() => {
-        if (active) setData(null);
-      });
+    // Leave the initial count unknown on failure; opening the inbox retries.
+    void load().catch(() => {});
     return () => {
-      active = false;
+      ++loadVersion.current;
     };
-  }, []);
+  }, [load]);
   useEffect(() => {
     if (!open) return;
     const element = dialog.current!;
