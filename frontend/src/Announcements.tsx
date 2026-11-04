@@ -163,7 +163,10 @@ export function Announcements({
           ref={returnButton}
           className="text-button"
           disabled={locked || !!draft || !!deleting}
-          onClick={() => void refresh(1)}
+          onClick={() => {
+            if (initialAnnouncementId) void refresh(1);
+            else setSelectedId(null);
+          }}
         >
           ← 返回公告清單
         </button>
