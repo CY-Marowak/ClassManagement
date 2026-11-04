@@ -164,7 +164,8 @@ export function Announcements({
           className="text-button"
           disabled={locked || !!draft || !!deleting}
           onClick={() => {
-            if (initialAnnouncementId) void refresh(1);
+            if (initialAnnouncementId && openedId.current === null)
+              void refresh(1);
             else setSelectedId(null);
           }}
         >

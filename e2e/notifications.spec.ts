@@ -80,6 +80,19 @@ test("notification bell opens the target and viewing never confirms announcement
   await expect(
     dialog.getByRole("heading", { name: "通知目標公告", exact: true }),
   ).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "← 返回公告清單", exact: true })
+    .click();
+  await expect(dialog.locator(".announcement-card")).toHaveCount(2);
+  const announcementButton = dialog.getByRole("button", {
+    name: "閱讀公告：通知目標公告",
+    exact: true,
+  });
+  await announcementButton.click();
+  await dialog
+    .getByRole("button", { name: "← 返回公告清單", exact: true })
+    .click();
+  await expect(announcementButton).toBeFocused();
   await dialog.getByRole("button", { name: "關閉通知" }).click();
   await expect(
     student.getByRole("button", { name: "通知，0 則未查看", exact: true }),
