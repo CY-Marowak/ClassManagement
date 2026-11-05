@@ -144,9 +144,14 @@ References: [send API](https://resend.com/docs/api-reference/emails/send-email),
 
 ## Before a real trial
 
+This section records the original launch checklist. Cloud backup acceptance,
+Brevo public email receipt and teacher trial were completed in October 2026;
+they are not new prerequisites for every v2 release. Current release verification
+is described below; keep the configured email provider and free service plans.
+
 Backup setup, key custody, local CLI tests and the independent restore procedure
-are documented in [BACKUP.md](BACKUP.md). Issue 03 remains pending cloud acceptance
-until the private ops workflow, R2 and notification/restore drills are verified.
+are documented in [BACKUP.md](BACKUP.md). Cloud acceptance for deployment issue 03
+is recorded in the local planning tracker; preserve its existing schedule and guards.
 
 - Configure Resend HTTPS email delivery with a verified sending domain, and test
   receipt, expiry, single use and recovery links on the public origin.
@@ -176,3 +181,38 @@ restore by overwriting the active database.
 
 The health response is not a database or email availability guarantee. Inspect
 service logs for failures and verify the affected workflow directly.
+
+## Complete v2 release
+
+1. Pin the reviewed commit and verify the remote branch matches it. Run the full
+   API/PostgreSQL and Edge suites, build, static checks and migration drift check.
+   Check all six mascot animations and mobile screenshots separately.
+2. Capture existing business-row fingerprints and take a private encrypted
+   pre-deploy backup using `BACKUP.md`. Do not run an additional scheduled R2
+   upload: its daily-attempt and monthly cost guards remain in force. Test a
+   restore only in an independent empty `cm_restore_*` database.
+3. Inspect the current live revision/schema. For the task-05 release (`8cf2583`),
+   migrations 0024–0027 add announcement versions/receipts, notifications and
+   reminders. Earlier v1 databases also need 0020–0023 for role ownership and
+   six mascots. Existing avatars and mascot animals/experience stay unchanged;
+   existing announcements start at content version 1 with no receipts. Migration
+   does not enqueue historical notifications or reminders.
+4. With automatic deploy disabled, trigger one manual Render deploy after the
+   reviewed commit is pushed. Startup runs the production security check and
+   migrations before Gunicorn. Confirm the actual live commit and deployment
+   result; pushing alone is not deployment evidence.
+5. Compare old rows using their pre-upgrade columns before creating release-test
+   data. Verify HTTPS, secure sessions, login and isolation, then both cross-feature
+   flows on a separate fake class. Confirm exports, updated-version unread state,
+   notification viewing versus explicit confirmation, and reminder history.
+   Record the deployment ID, live SHA, checks and remaining owner acceptance in
+   the v2 task record without credentials or student records.
+
+Code rollback restores application code only. The v2 migrations are additive,
+but rolling back below the complete v2 release disables the new workflows and
+must be checked against the migrated schema. Do not reverse migrations to make
+an older build fit: that can remove role collections, versions or receipts.
+Prefer a forward fix. Data recovery instead restores a selected encrypted
+snapshot to a separate database, verifies it with the matching app version and
+requires a deliberate cutover/write-freeze decision; a restore drill never
+changes Render's database connection.

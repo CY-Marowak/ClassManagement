@@ -100,7 +100,9 @@ Use a trusted dump and a dedicated target with no concurrent writers.
 
 5. Start the matching app commit against the restored database with private
    settings, disable real email, then check teacher/student login, classes,
-   scores, points, mascot experience and isolation. Compare source snapshot
+   scores, points, role ownership/selection, mascot experience, history/CSV,
+   announcement versions/receipts, notification state, reminders and isolation.
+   Compare source snapshot
    evidence captured at backup time, not a production database that kept changing.
 6. Record object key, backup time, app revision, tool versions, restore target,
    elapsed time and pass/fail evidence without credentials or personal records.
@@ -119,6 +121,14 @@ python scripts/test_backup.py
 Tests refuse non-local hosts. They create uniquely named databases and keep them
 and `.local/backup-test-*` evidence; they do not drop databases or bulk-delete
 files. Test identities are disposable test data, never production recovery keys.
+
+The v2 probe runs score → award → purchase/switch → feed → history/export and
+announcement → confirm → edit → notification/reminder → reconfirm before backup.
+After restore it compares durable business rows (including operation IDs and
+historical receipts), verifies logins/permissions and continues feeding. Login
+timestamps and authentication rate buckets are excluded from snapshot comparison
+because the verification logins legitimately change them. The encrypted archive
+also contains those tables; they are not excluded from the dump.
 
 References: [pg_dump](https://www.postgresql.org/docs/17/app-pgdump.html),
 [pg_restore](https://www.postgresql.org/docs/17/app-pgrestore.html).
