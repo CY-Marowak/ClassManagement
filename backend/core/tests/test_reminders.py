@@ -29,7 +29,10 @@ class ReminderTests(APITestCase):
         item = self.publish().json()
         start = datetime(2026, 11, 5, 0, 0, tzinfo=timezone.utc)
         for day in range(26):
-            with patch("core.reminders.timezone.now", return_value=start + timedelta(days=day)):
+            # Advance the reminder calendar without expiring the teacher's session.
+            with patch(
+                "core.reminders.reminder_today", return_value=(start + timedelta(days=day)).date()
+            ):
                 response = self.client.post(
                     self.path(item),
                     self.payload(item, student_id=self.students[0]["id"]),
