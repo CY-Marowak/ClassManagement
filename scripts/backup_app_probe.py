@@ -180,8 +180,10 @@ def run(mode, evidence):
     snapshot = {
         model.__name__: list(model.objects.order_by("pk").values())
         for model in apps.get_app_config("core").get_models()
-        if model.__name__ not in ("User", "AuthRateBucket")
+        if model.__name__ != "AuthRateBucket"
     }
+    for user in snapshot["User"]:
+        user.pop("last_login", None)
     snapshot = json.loads(json.dumps(snapshot, default=str))
     if mode == "seed":
         data["snapshot"] = snapshot
