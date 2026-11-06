@@ -112,7 +112,7 @@ export function MascotFarm({
       </div>
       <div className="farm-controls">
         <p>
-          {stageName} · {scale.toFixed(2)} 倍
+          {stageName}
         </p>
         <button
           type="button"
