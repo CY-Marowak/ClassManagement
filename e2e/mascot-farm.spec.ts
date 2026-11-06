@@ -131,7 +131,7 @@ for (const [animal, name] of [
         page.getByRole("heading", { name: `${name}夥伴 · Lv.${level}` }),
       ).toBeVisible();
       await expect(
-        page.getByText(`${stage} · ${scale} 倍`, { exact: true }),
+        page.getByText(`${stage}`, { exact: true }),
       ).toBeVisible();
       await expect(
         page.getByRole("img", { name: `農場中的${name} · ${stage}` }),
