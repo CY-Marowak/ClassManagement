@@ -1,7 +1,15 @@
 # CM deployment and operations
 
-Phase 1: Render Free + Neon Free. Email delivery and independent backups are
-separate follow-up tasks; do not invite a real class until those are verified.
+CM runs on Render Free with Neon Free PostgreSQL. The deployed service uses
+Brevo for verification and password-reset emails, with daily encrypted backups
+to private Cloudflare R2 storage. External email delivery, independent restore
+and the initial teacher trial were verified in October 2026; v2 acceptance was
+completed in November 2026.
+
+This guide covers new installations, configuration, updates and recovery.
+Initial setup steps are not pending work for the existing deployment. Preserve
+its configured email provider and backup schedule when updating the app;
+backup configuration and restore procedures are documented in [BACKUP.md](BACKUP.md).
 
 ## Build and start
 
@@ -17,7 +25,7 @@ deploys disabled. It does not create a Render database. The health endpoint
 Startup runs `check --deploy --fail-level WARNING`, applies migrations, and
 starts one Gunicorn worker with four threads. Only backwards-compatible
 migrations can use this startup sequence while an old deployment still serves
-traffic. There are no new migrations in this deployment change.
+traffic. Review the migrations included in each release before deploying.
 
 ## Private settings
 
@@ -56,15 +64,16 @@ query strings, headers, cookies and bodies; action tokens use URL fragments.
 6. Restart/redeploy and check the same account and data still work. Record cold
    start delay. A Free service sleeps when idle; no keep-alive job is included.
 
-Use the seeded verified teacher accounts until the Resend settings below have
-been deployed and actual receipt has been verified. Do not enable DEBUG to work
-around missing email.
+For a new installation, use the seeded verified teacher accounts until the
+chosen email backend is configured and actual receipt has been verified.
+Do not enable DEBUG to work around missing email.
 
-## Brevo verification and password reset (pilot)
+## Brevo verification and password reset (current deployment)
 
-The pilot adapter uses `POST https://api.brevo.com/v3/smtp/email` over HTTPS.
-Select it explicitly; the existing production default remains Resend until the
-deployment settings are changed. Local DEBUG still defaults to file-based mail.
+The Brevo adapter uses `POST https://api.brevo.com/v3/smtp/email` over HTTPS.
+The current deployment selects it explicitly through `CM_EMAIL_BACKEND`;
+the code default remains Resend when no override is provided. Local DEBUG
+still defaults to file-based mail.
 
 Set these private environment variables on Render after the reviewed code is deployed:
 
@@ -94,7 +103,7 @@ sender settings, keeping its owner-only recipient restriction and key.
 
 Official API contract: https://developers.brevo.com/reference/send-transac-email
 
-## Resend verification and password reset (existing deployment / rollback)
+## Resend verification and password reset (alternative / rollback)
 
 Production defaults to `core.email_backend.ResendEmailBackend`, using HTTPS
 `POST https://api.resend.com/emails`; it does not require SMTP ports. Local DEBUG
@@ -104,7 +113,7 @@ Set these private environment variables on Render:
 
 - `CM_EMAIL_BACKEND=core.email_backend.ResendEmailBackend` (explicit override).
 - `CM_RESEND_API_KEY`: a dedicated Resend sending-access key, kept in Render secrets.
-- `CM_FROM_EMAIL=CM <onboarding@resend.dev>` for the current owner-only test.
+- `CM_FROM_EMAIL=CM <onboarding@resend.dev>` for an owner-only test.
 - `CM_RESEND_TEST_RECIPIENT`: the exact email of the Resend account owner.
 - Keep `CM_FRONTEND_URL` at the public HTTPS origin (the Render default is suitable).
 
@@ -169,8 +178,8 @@ is recorded in the local planning tracker; preserve its existing schedule and gu
 
 ## Updates and recovery
 
-Before each release, review migration compatibility and take an independent
-backup once the backup workflow is available. Deploy an explicit reviewed commit.
+Before each application release, review migration compatibility and take an
+independent backup using the configured workflow. Deploy an explicit reviewed commit.
 Check health and one authenticated core workflow after release. A failed build
 does not prove the previous deployment stopped serving; check service status.
 

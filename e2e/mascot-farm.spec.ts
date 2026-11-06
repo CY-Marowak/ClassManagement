@@ -92,9 +92,7 @@ for (const [animal, name] of [
     await expect(
       page.getByRole("img", { name: /農場中的.*幼年/ }),
     ).toBeVisible();
-    await expect(
-      page.getByText("幼年 · 1.00 倍", { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText("幼年", { exact: true })).toBeVisible();
     await page.emulateMedia({ reducedMotion: "reduce" });
     await expect(page.getByRole("button", { name: "動一動" })).toBeVisible();
     const traveller = page.locator(".farm-traveller");
@@ -130,9 +128,7 @@ for (const [animal, name] of [
       await expect(
         page.getByRole("heading", { name: `${name}夥伴 · Lv.${level}` }),
       ).toBeVisible();
-      await expect(
-          page.getByText(`${stage}· ${scale} 倍`, { exact: true }),
-      ).toBeVisible();
+      await expect(page.getByText(stage, { exact: true })).toBeVisible();
       await expect(
         page.getByRole("img", { name: `農場中的${name} · ${stage}` }),
       ).toBeVisible();
@@ -167,10 +163,10 @@ for (const [animal, name] of [
     }
     await page.getByRole("button", { name: "動一動" }).click();
     for (const [exp, level, label] of [
-      [999, 5, "成長期 · 1.12 倍"],
-      [4499, 10, "成熟 · 1.27 倍"],
-      [20999, 21, "成熟 · 1.60 倍"],
-      [23099, 22, "成熟 · 1.60 倍"],
+      [999, 5, "成長期"],
+      [4499, 10, "成熟"],
+      [20999, 21, "成熟"],
+      [23099, 22, "成熟"],
     ] as const) {
       seedGrowth(cohort.id, animal, exp);
       await page.getByRole("button", { name: "重新整理吉祥物" }).click();
