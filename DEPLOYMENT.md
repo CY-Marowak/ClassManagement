@@ -71,9 +71,7 @@ Do not enable DEBUG to work around missing email.
 ## Brevo verification and password reset (current deployment)
 
 The Brevo adapter uses `POST https://api.brevo.com/v3/smtp/email` over HTTPS.
-The current deployment selects it explicitly through `CM_EMAIL_BACKEND`;
-the code default remains Resend when no override is provided. Local DEBUG
-still defaults to file-based mail.
+Production defaults to this adapter. Local DEBUG defaults to file-based mail.
 
 Set these private environment variables on Render after the reviewed code is deployed:
 
@@ -85,8 +83,7 @@ Set these private environment variables on Render after the reviewed code is dep
 
 The ChatGPT Brevo plugin connection does not configure the application's key.
 Enter credentials directly into platform secrets; never paste them into chat,
-source files or logs. This adapter sends to the requesting teacher's address;
-the legacy `CM_RESEND_TEST_RECIPIENT` only applies to the Resend adapter.
+source files or logs. This adapter sends to the requesting teacher's address.
 No Brevo templates, marketing lists or contact imports are needed.
 
 Provider failures (including quota rejection), missing credentials, malformed
@@ -98,42 +95,11 @@ link. A message ID means API acceptance, not successful inbox delivery.
 Before inviting teachers, use a user-selected external mailbox to verify the
 registration and password-reset checklist below. The Brevo dashboard test alone
 does not verify CM's public links. Check account quota before the trial and do
-not enable a paid upgrade. Rollback: restore the previous Resend backend and
-sender settings, keeping its owner-only recipient restriction and key.
+not enable a paid upgrade.
 
 Official API contract: https://developers.brevo.com/reference/send-transac-email
 
-## Resend verification and password reset (alternative / rollback)
-
-Production defaults to `core.email_backend.ResendEmailBackend`, using HTTPS
-`POST https://api.resend.com/emails`; it does not require SMTP ports. Local DEBUG
-still defaults to file-based mail so automated browser tests never send real mail.
-
-Set these private environment variables on Render:
-
-- `CM_EMAIL_BACKEND=core.email_backend.ResendEmailBackend` (explicit override).
-- `CM_RESEND_API_KEY`: a dedicated Resend sending-access key, kept in Render secrets.
-- `CM_FROM_EMAIL=CM <onboarding@resend.dev>` for an owner-only test.
-- `CM_RESEND_TEST_RECIPIENT`: the exact email of the Resend account owner.
-- Keep `CM_FRONTEND_URL` at the public HTTPS origin (the Render default is suitable).
-
-The test-recipient restriction rejects other recipients; it never redirects their
-tokens to the owner. Using `resend.dev` without an explicit test recipient fails
-closed. For a later real trial, first verify an owned sender domain, change
-`CM_FROM_EMAIL`, and deliberately clear the test-recipient restriction. Do not
-claim other teachers can register while the test restriction is active.
-
-The API returns a safe JSON 503 on missing credentials, recipient restrictions,
-provider errors, malformed responses or timeouts. Logs contain only a category or
-HTTP status, never credentials, email bodies or action tokens. A failed send rolls
-back registration/token issuance and preserves previously valid links. The
-request has a 10-second network timeout and does not automatically retry. After
-an ambiguous timeout a provider might still deliver the mail, but the rolled-back
-token will not work; request a fresh link. API acceptance is not proof of inbox
-delivery. Resend and the database are separate systems, so even an accepted send
-can yield an unusable link if the subsequent database commit fails.
-
-After deployment, test with the permitted owner email:
+After deployment, test with the selected mailbox:
 
 1. Register, receive the verification email, open its public HTTPS link and
    confirm verification. Opening a link alone does not consume it.
@@ -141,15 +107,12 @@ After deployment, test with the permitted owner email:
    Confirm the old password and existing sessions no longer work.
 3. Confirm a used link is rejected. Links expire after 30 minutes; requesting a
    fresh link invalidates older links of the same purpose.
-4. Review Resend delivery status and the actual inbox/spam folder. Keep tokens
+4. Review Brevo delivery status and the actual inbox/spam folder. Keep tokens
    and credentials out of screenshots, Git and shared notes.
 
 Local regression coverage uses real PostgreSQL through the account API and mocks
-only Resend's external HTTP transport. Public receipt remains a separate manual
+only Brevo's external HTTP transport. Public receipt remains a separate manual
 acceptance step. No schema migration is required for this transport.
-
-References: [send API](https://resend.com/docs/api-reference/emails/send-email),
-[API errors](https://resend.com/docs/api-reference/errors).
 
 ## Before a real trial
 
@@ -162,7 +125,7 @@ Backup setup, key custody, local CLI tests and the independent restore procedure
 are documented in [BACKUP.md](BACKUP.md). Cloud acceptance for deployment issue 03
 is recorded in the local planning tracker; preserve its existing schedule and guards.
 
-- Configure Resend HTTPS email delivery with a verified sending domain, and test
+- Configure Brevo HTTPS email delivery with a verified sender, and test
   receipt, expiry, single use and recovery links on the public origin.
 - Configure daily encrypted PostgreSQL dumps to a private R2 Standard bucket,
   failure notifications, retention, and an independent-database restore drill.

@@ -88,4 +88,4 @@
 
 ## 外部服務
 
-CM後端包含Brevo `POST https://api.brevo.com/v3/smtp/email` 與Resend `POST https://api.resend.com/emails` 郵件adapter。Neon透過PostgreSQL協定由ORM存取，不是前端REST API。R2備份走S3相容介面；備份工作流不是使用者產品API。供應商金鑰只放私密環境設定。
+CM後端包含Brevo `POST https://api.brevo.com/v3/smtp/email` 郵件adapter。Neon透過PostgreSQL協定由ORM存取，不是前端REST API。R2備份走S3相容介面；備份工作流不是使用者產品API。供應商金鑰只放私密環境設定。

@@ -1,11 +1,13 @@
 import io
 import json
 import re
+from datetime import timedelta
 from http.client import IncompleteRead
 from unittest.mock import patch
 from urllib.error import HTTPError
 
 from django.test import override_settings
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 
@@ -135,3 +137,15 @@ class BrevoDeliveryTests(APITestCase):
             ).status_code,
             200,
         )
+
+    def test_reset_link_expires_after_thirty_minutes(self):
+        self.client.post("/api/auth/register/", self.registration)
+        self.client.post("/api/auth/forgot-password/", {"email": self.registration["email"]})
+        token = self.token()
+        future = timezone.now() + timedelta(minutes=31)
+        with patch("django.utils.timezone.now", return_value=future):
+            response = self.client.post(
+                "/api/auth/reset-password/", {"token": token, "password": "UpdatedClassroom!2026"}
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.client.post("/api/auth/login/", self.registration).status_code, 200)
