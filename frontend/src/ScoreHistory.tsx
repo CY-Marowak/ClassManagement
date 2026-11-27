@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { api } from "./api";
 import { ScoreChangeDialog, type ScoreManagement } from "./ScoreChangeDialog";
 
@@ -47,6 +47,8 @@ export function ScoreHistory({
   } | null>(null);
   const [data, setData] = useState<ScorePage | null>(null);
   const [page, setPage] = useState(1);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsId = useId();
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -111,103 +113,117 @@ export function ScoreHistory({
             <p className="muted small">
               共 {data.count} 筆 · 由新到舊 · 分數與可花費的點數分開計算
             </p>
-            {data.results.length === 0 ? (
-              <p className="muted">目前還沒有分數紀錄。</p>
-            ) : (
-              <ol className="score-list">
-                {data.results.map((record) => (
-                  <li key={record.id} className="score-record">
-                    <div className="score-record-top">
-                      <strong>
-                        {record.kind === "positive" ? "加分" : "扣分"}{" "}
-                        {record.score > 0 ? "+" : ""}
-                        {record.score}
-                      </strong>
-                      {teacher && (
-                        <span>
-                          {record.seat_number} 號 · {record.student_name}
-                        </span>
-                      )}
-                    </div>
-                    <p>
-                      {record.reason}
-                      {record.awarded_points !== null && (
-                        <span className="badge">
-                          已發放 {record.awarded_points} 點
-                        </span>
-                      )}
-                      {record.is_modified && (
-                        <span className="badge">已修改</span>
-                      )}
-                      {record.needs_reason && (
-                        <span className="badge">待補原因</span>
-                      )}
-                    </p>
-                    {management &&
-                      (management.homeroom ||
-                        management.teacherId === record.creator_id) && (
-                        <div className="actions">
-                          <button
-                            className="secondary"
-                            onClick={() =>
-                              setEditing({ record, mode: "single" })
-                            }
-                          >
-                            修改這筆
-                          </button>
-                          {record.batch_id && (
+            {!teacher && (
+              <button
+                className="secondary"
+                aria-expanded={detailsOpen}
+                aria-controls={detailsId}
+                onClick={() => setDetailsOpen((open) => !open)}
+              >
+                {detailsOpen ? "收合分數明細" : "展開分數明細"}
+              </button>
+            )}
+            <div id={detailsId} hidden={!teacher && !detailsOpen}>
+              {data.results.length === 0 ? (
+                <p className="muted">目前還沒有分數紀錄。</p>
+              ) : (
+                <ol className="score-list">
+                  {data.results.map((record) => (
+                    <li key={record.id} className="score-record">
+                      <div className="score-record-top">
+                        <strong>
+                          {record.kind === "positive" ? "加分" : "扣分"}{" "}
+                          {record.score > 0 ? "+" : ""}
+                          {record.score}
+                        </strong>
+                        {teacher && (
+                          <span>
+                            {record.seat_number} 號 · {record.student_name}
+                          </span>
+                        )}
+                      </div>
+                      <p>
+                        {record.reason}
+                        {record.awarded_points !== null && (
+                          <span className="badge">
+                            已發放 {record.awarded_points} 點
+                          </span>
+                        )}
+                        {record.is_modified && (
+                          <span className="badge">已修改</span>
+                        )}
+                        {record.needs_reason && (
+                          <span className="badge">待補原因</span>
+                        )}
+                      </p>
+                      {management &&
+                        (management.homeroom ||
+                          management.teacherId === record.creator_id) && (
+                          <div className="actions">
                             <button
                               className="secondary"
                               onClick={() =>
-                                setEditing({ record, mode: "batch" })
+                                setEditing({ record, mode: "single" })
                               }
                             >
-                              修改同批
+                              修改這筆
                             </button>
-                          )}
-                          <button
-                            className="text-button danger-text"
-                            onClick={() =>
-                              setEditing({ record, mode: "delete" })
-                            }
-                          >
-                            刪除紀錄
-                          </button>
-                        </div>
+                            {record.batch_id && (
+                              <button
+                                className="secondary"
+                                onClick={() =>
+                                  setEditing({ record, mode: "batch" })
+                                }
+                              >
+                                修改同批
+                              </button>
+                            )}
+                            <button
+                              className="text-button danger-text"
+                              onClick={() =>
+                                setEditing({ record, mode: "delete" })
+                              }
+                            >
+                              刪除紀錄
+                            </button>
+                          </div>
+                        )}
+                      {record.note && (
+                        <p className="score-note">{record.note}</p>
                       )}
-                    {record.note && <p className="score-note">{record.note}</p>}
-                    {teacher && record.batch_id && (
+                      {teacher && record.batch_id && (
+                        <p className="muted small">
+                          同批記分 · {record.batch_id.slice(0, 8)}
+                        </p>
+                      )}
                       <p className="muted small">
-                        同批記分 · {record.batch_id.slice(0, 8)}
+                        {record.creator_name} ·{" "}
+                        <time dateTime={record.created_at}>
+                          {new Date(record.created_at).toLocaleString("zh-TW")}
+                        </time>
                       </p>
-                    )}
-                    <p className="muted small">
-                      {record.creator_name} ·{" "}
-                      <time dateTime={record.created_at}>
-                        {new Date(record.created_at).toLocaleString("zh-TW")}
-                      </time>
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            )}
-            <nav className="actions" aria-label="分數紀錄分頁">
-              <button
-                className="secondary"
-                disabled={!data.previous}
-                onClick={() => setPage((x) => x - 1)}
-              >
-                上一頁
-              </button>
-              <span>第 {page} 頁</span>
-              <button
-                className="secondary"
-                disabled={!data.next}
-                onClick={() => setPage((x) => x + 1)}
-              >
-                下一頁
-              </button>
-            </nav>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <nav className="actions" aria-label="分數紀錄分頁">
+                <button
+                  className="secondary"
+                  disabled={!data.previous}
+                  onClick={() => setPage((x) => x - 1)}
+                >
+                  上一頁
+                </button>
+                <span>第 {page} 頁</span>
+                <button
+                  className="secondary"
+                  disabled={!data.next}
+                  onClick={() => setPage((x) => x + 1)}
+                >
+                  下一頁
+                </button>
+              </nav>
+            </div>
           </>
         )
       )}

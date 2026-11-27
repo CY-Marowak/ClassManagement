@@ -656,6 +656,18 @@ test("teachers record scores including zero; retry is safe; students see only th
   await student.getByRole("button", { name: "儲存密碼並進入班級" }).click();
   const own = student.getByRole("region", { name: "我的分數", exact: true });
   await expect(own.locator(".score-total")).toHaveText("累積分數 -3");
+  const firstScore = own.locator(".score-record").first();
+  const pagination = own.getByRole("navigation", { name: "分數紀錄分頁" });
+  await expect(firstScore).toBeHidden();
+  await expect(pagination).toBeHidden();
+  await expect(own.getByRole("button", { name: "明細與匯出" })).toBeVisible();
+  await own.getByRole("button", { name: "展開分數明細" }).click();
+  await expect(firstScore).toBeVisible();
+  await expect(pagination).toBeVisible();
+  await own.getByRole("button", { name: "收合分數明細" }).click();
+  await expect(firstScore).toBeHidden();
+  await expect(pagination).toBeHidden();
+  await own.getByRole("button", { name: "展開分數明細" }).click();
   await expect(own.locator(".score-record")).toHaveCount(5);
   await expect(own).toContainText("共同教師陳");
   await expect(own).toContainText("待補原因");
